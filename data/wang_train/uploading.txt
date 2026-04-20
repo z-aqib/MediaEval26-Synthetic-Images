@@ -1,0 +1,73 @@
+PS D:\wang_kaggle_dataset> kaggle datasets version -p "D:\wang_kaggle_dataset" -m "Added dataset zip files"
+Starting upload for file cnn_synth_test.zip
+100%|██████████████████████████████████████████████████████████████████| 18.7G/18.7G [4:16:08<00:00, 1.31MB/s]
+Upload successful: cnn_synth_test.zip (19GB)
+Starting upload for file test.zip
+100%|████████████████████████████████████████████████████████████████████████████████| 796M/796M [05:54<00:00, 2.36MB/s]
+Upload successful: test.zip (796MB)
+Starting upload for file val.zip
+100%|████████████████████████████████████████████████████████████████████████████████| 793M/793M [06:00<00:00, 2.30MB/s]
+Upload successful: val.zip (793MB)
+Dataset version is being created. Please check progress at https://www.kaggle.com/datasets/zuhaaqib/wang-cnndetection-dataset
+
+
+
+PS D:\wang_kaggle_dataset> kaggle datasets create -p "D:\wang_kaggle_dataset_full"
+Starting upload for file airplane.zip
+100%|█████████████████████████████████████████████████████████████████████████████| 2.76G/2.76G [1:10:44<00:00, 698kB/s]
+Upload successful: airplane.zip (3GB)
+Starting upload for file bicycle.zip
+5.74GB [50:59, 2.01MB/s]
+Upload successful: bicycle.zip (4GB)
+Starting upload for file bird.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.48G/3.48G [39:12<00:00, 1.59MB/s]
+Upload successful: bird.zip (3GB)
+Starting upload for file boat.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.51G/3.51G [37:16<00:00, 1.68MB/s]
+Upload successful: boat.zip (4GB)
+Starting upload for file bottle.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 2.73G/2.73G [27:13<00:00, 1.79MB/s]
+Upload successful: bottle.zip (3GB)
+Starting upload for file bus.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.58G/3.58G [31:23<00:00, 2.04MB/s]
+Upload successful: bus.zip (4GB)
+Starting upload for file car.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.48G/3.48G [31:48<00:00, 1.96MB/s]
+Upload successful: car.zip (3GB)
+Starting upload for file cat.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.46G/3.46G [35:57<00:00, 1.72MB/s]
+Upload successful: cat.zip (3GB)
+Starting upload for file chair.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 2.96G/2.96G [28:13<00:00, 1.87MB/s]
+Upload successful: chair.zip (3GB)
+Starting upload for file cow.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 4.00G/4.00G [39:06<00:00, 1.83MB/s]
+Upload successful: cow.zip (4GB)
+Starting upload for file dog.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.53G/3.53G [34:52<00:00, 1.81MB/s]
+Upload successful: dog.zip (4GB)
+Starting upload for file horse.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.91G/3.91G [34:17<00:00, 2.04MB/s]
+Upload successful: horse.zip (4GB)
+Starting upload for file motorbike.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.85G/3.85G [36:55<00:00, 1.87MB/s]
+Upload successful: motorbike.zip (4GB)
+Starting upload for file person.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 3.35G/3.35G [29:06<00:00, 2.06MB/s]
+Upload successful: person.zip (3GB)
+Starting upload for file pottedplant.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 4.06G/4.06G [39:25<00:00, 1.84MB/s]
+Upload successful: pottedplant.zip (4GB)
+Starting upload for file sheep.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 4.20G/4.20G [38:22<00:00, 1.96MB/s]
+Upload successful: sheep.zip (4GB)
+Starting upload for file sofa.zip
+3.88GB [1:31:56, 756kB/s]
+Upload successful: sofa.zip (3GB)
+Starting upload for file train.zip
+100%|█████████████████████████████████████████████████████████████████████████████| 3.72G/3.72G [1:23:55<00:00, 792kB/s]
+Upload successful: train.zip (4GB)
+Starting upload for file tvmonitor.zip
+100%|██████████████████████████████████████████████████████████████████████████████| 2.57G/2.57G [42:01<00:00, 1.09MB/s]
+Upload successful: tvmonitor.zip (3GB)
+Your private Dataset is being created. Please check progress at https://www.kaggle.com/datasets/zuhaaqib/wang-cnndetection-dataset-train
