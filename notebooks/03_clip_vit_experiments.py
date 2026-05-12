@@ -1,6 +1,38 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# # 03 - ViT-B/16 Experiments
+# 
+# This notebook trains and evaluates **ViT-B/16** for Task A of the competition: real vs synthetic image classification.
+# 
+# This file is named `clip_vit` because this model family is for transformer-based image models. Right now, the notebook uses torchvision’s **ViT-B/16** model. ViT means Vision Transformer. Instead of mainly learning local patterns like CNNs, ViT splits an image into patches and learns relationships between those patches.
+# 
+# ## What this notebook does
+# 
+# - Loads the selected training datasets from Kaggle.
+# - Keeps the evaluation dataset fixed so results can be compared fairly across models.
+# - Trains ViT-B/16 using binary classification.
+# - Predicts whether each image is real or synthetic.
+# - Calculates accuracy, precision, recall, F1, ROC AUC, Average Precision, EER, and confusion matrix values.
+# - Saves:
+#   - model summary CSV
+#   - `predictions.csv`
+#   - `training_history.csv`
+#   - `config.json`
+#   - `best_model.pth`
+#   - `kaggle_working.zip`
+# 
+# ## Label meaning
+# 
+# - `0 = real`
+# - `1 = synthetic`
+# 
+# ## Important rule
+# 
+# Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
+# 
+# ViT is heavier and more sensitive to hyperparameters. If Kaggle gives a CUDA memory error, reduce `BATCH_SIZE` from `16` to `8`, then to `4` if needed.
+
 # # Imports
 
 # In[ ]:

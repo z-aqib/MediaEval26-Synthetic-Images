@@ -1,6 +1,38 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# # 02 - ConvNeXt-Tiny Experiments
+# 
+# This notebook trains and evaluates **ConvNeXt-Tiny** for Task A of the competition: real vs synthetic image classification.
+# 
+# ConvNeXt-Tiny is a modern CNN-style model. It is heavier than EfficientNet-B0, but it can learn stronger image features. It is useful for checking whether a more powerful CNN model performs better on synthetic image detection.
+# 
+# ## What this notebook does
+# 
+# - Loads the selected training datasets from Kaggle.
+# - Keeps the evaluation dataset fixed so results can be compared fairly across models.
+# - Trains ConvNeXt-Tiny using binary classification.
+# - Predicts whether each image is real or synthetic.
+# - Calculates accuracy, precision, recall, F1, ROC AUC, Average Precision, EER, and confusion matrix values.
+# - Saves:
+#   - model summary CSV
+#   - `predictions.csv`
+#   - `training_history.csv`
+#   - `config.json`
+#   - `best_model.pth`
+#   - `kaggle_working.zip`
+# 
+# ## Label meaning
+# 
+# - `0 = real`
+# - `1 = synthetic`
+# 
+# ## Important rule
+# 
+# Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
+# 
+# If Kaggle gives a CUDA memory error, reduce `BATCH_SIZE` from `24` to `16`, then to `8` if needed.
+
 # # Imports
 
 # In[ ]:
