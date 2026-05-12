@@ -31,7 +31,7 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
-# In[ ]:
+# In[10]:
 
 
 # Install common packages needed for EfficientNet-B0 training and experiment logging
@@ -41,7 +41,7 @@ get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tq
 
 # # Imports
 
-# In[ ]:
+# In[11]:
 
 
 # ============================================================
@@ -94,7 +94,7 @@ from torchvision.models import EfficientNet_B0_Weights
 print("EfficientNet-specific imports completed.")
 
 
-# In[ ]:
+# In[12]:
 
 
 # ============================================================
@@ -141,7 +141,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[ ]:
+# In[13]:
 
 
 # ============================================================
@@ -209,7 +209,7 @@ print(f"USE_AMP: {USE_AMP}")
 print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 
 
-# In[ ]:
+# In[14]:
 
 
 # ============================================================
@@ -255,7 +255,7 @@ print(f"  RealRAISE train: {USE_REALRAISE_TRAIN}")
 print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
 
 
-# In[ ]:
+# In[15]:
 
 
 # ============================================================
@@ -302,7 +302,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[ ]:
+# In[16]:
 
 
 # ============================================================
@@ -317,7 +317,7 @@ DATASET_PATHS = {
     # DMImageDetect datasets
     "dmimagedetect_test": KAGGLE_INPUT_DIR / "izmakhan26926/dmimagedetect-test",
     "dmimagedetect_train": KAGGLE_INPUT_DIR / "izmakhan26926/dmimagedetect-traintest",
-    "dmimagedetect_realraise": KAGGLE_INPUT_DIR / "s/izmakhan26926/dmimagedetect-realraise",
+    "dmimagedetect_realraise": KAGGLE_INPUT_DIR / "izmakhan26926/dmimagedetect-realraise",
 
     # Corvi latent diffusion dataset
     "corvi_latent_diffusion": KAGGLE_INPUT_DIR / "izmakhan26926/corvi-latent-diffusion-trainingset",
@@ -338,7 +338,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[ ]:
+# In[17]:
 
 
 # ============================================================
@@ -468,6 +468,9 @@ def scan_dataset(dataset_key, dataset_path, max_images=None):
 
     image_paths = [p for p in dataset_path.rglob("*") if p.is_file() and is_image_file(p)]
 
+    # Shuffle before limiting so MAX_TRAIN_IMAGES does not only take one folder/class first
+    random.Random(SEED).shuffle(image_paths)
+
     if max_images is not None:
         image_paths = image_paths[:max_images]
 
@@ -525,10 +528,78 @@ def print_dataset_summary(df, name):
     print("\nGenerator/source counts:")
     print(df["generator"].value_counts().head(20))
 
+def load_dmimagedetect_train_from_csv(dataset_key, dataset_path, max_pairs=None):
+    """
+    Load DMImageDetect-Train using list_train.csv.
+
+    In this dataset:
+        filename0 = real COCO image
+        filename1 = synthetic latent diffusion image
+
+    Label convention:
+        0 = real
+        1 = synthetic
+    """
+
+    csv_path = dataset_path / "train_set" / "list_train.csv"
+
+    if not csv_path.exists():
+        print(f"[SKIP] CSV not found: {csv_path}")
+        return pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
+
+    # Read the CSV that contains real/fake image pairs
+    df_csv = pd.read_csv(csv_path)
+
+    # Shuffle before limiting so we do not always take the first rows only
+    df_csv = df_csv.sample(frac=1, random_state=SEED).reset_index(drop=True)
+
+    if max_pairs is not None:
+        df_csv = df_csv.head(max_pairs)
+
+    rows = []
+
+    for _, row in df_csv.iterrows():
+        # filename0 is the real image path relative to train_set
+        real_path = dataset_path / "train_set" / row["filename0"]
+
+        # filename1 is the synthetic image path relative to train_set
+        fake_path = dataset_path / "train_set" / row["filename1"]
+
+        # Add real image if it exists
+        if real_path.exists():
+            rows.append({
+                "filepath": str(real_path),
+                "image_name": real_path.name,
+                "label": 0,
+                "source_dataset": dataset_key,
+                "generator": "coco_real"
+            })
+
+        # Add synthetic image if it exists
+        if fake_path.exists():
+            rows.append({
+                "filepath": str(fake_path),
+                "image_name": fake_path.name,
+                "label": 1,
+                "source_dataset": dataset_key,
+                "generator": "coco_latent_t2i"
+            })
+
+    df = pd.DataFrame(rows)
+
+    print(f"[CSV LOAD] {dataset_key}")
+    print(f"  CSV path: {csv_path}")
+    print(f"  Images loaded with labels: {len(df)}")
+
+    if len(df) > 0:
+        print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
+
+    return df
+
 
 # ## load dataset
 
-# In[ ]:
+# In[18]:
 
 
 # ============================================================
@@ -589,11 +660,18 @@ else:
 train_df = train_df.drop_duplicates(subset=["filepath"]).reset_index(drop=True)
 
 # Build fixed evaluation dataframe.
-eval_df = scan_dataset(
-    dataset_key=EVALUATION_DATASET_KEY,
-    dataset_path=DATASET_PATHS[EVALUATION_DATASET_KEY],
-    max_images=MAX_EVAL_IMAGES
-)
+if EVALUATION_DATASET_KEY == "dmimagedetect_train":
+    eval_df = load_dmimagedetect_train_from_csv(
+        dataset_key=EVALUATION_DATASET_KEY,
+        dataset_path=DATASET_PATHS[EVALUATION_DATASET_KEY],
+        max_pairs=MAX_EVAL_IMAGES // 2 if MAX_EVAL_IMAGES is not None else None
+    )
+else:
+    eval_df = scan_dataset(
+        dataset_key=EVALUATION_DATASET_KEY,
+        dataset_path=DATASET_PATHS[EVALUATION_DATASET_KEY],
+        max_images=MAX_EVAL_IMAGES
+    )
 
 eval_df = eval_df.drop_duplicates(subset=["filepath"]).reset_index(drop=True)
 
@@ -601,7 +679,7 @@ print_dataset_summary(train_df, "TRAINING DATA")
 print_dataset_summary(eval_df, "FIXED EVALUATION DATA")
 
 
-# In[ ]:
+# In[19]:
 
 
 # ============================================================
@@ -626,7 +704,29 @@ else:
     print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
 
 
-# In[ ]:
+# In[20]:
+
+
+print(train_df["label"].value_counts())
+
+# Quick check to see what Kaggle paths actually exist
+for item in Path("/kaggle/input").iterdir():
+    print(item)
+
+print("Train label counts:")
+print(train_df["label"].value_counts())
+
+print("\nEval label counts:")
+print(eval_df["label"].value_counts())
+
+print("\nTrain sources:")
+print(train_df["source_dataset"].value_counts())
+
+print("\nEval sources:")
+print(eval_df["source_dataset"].value_counts())
+
+
+# In[21]:
 
 
 # ============================================================
@@ -658,7 +758,7 @@ if len(eval_df) > 0:
 
 # ## metric calculation
 
-# In[ ]:
+# In[22]:
 
 
 # ============================================================
@@ -792,7 +892,7 @@ print("Metric functions ready.")
 
 # ## logging
 
-# In[ ]:
+# In[23]:
 
 
 # ============================================================
@@ -1025,7 +1125,7 @@ print("Saving and logging functions ready.")
 
 # ## image transform
 
-# In[ ]:
+# In[24]:
 
 
 # ============================================================
@@ -1122,7 +1222,7 @@ print(f"Training augmentation type: {AUGMENTATION_TYPE}")
 
 # ## pytorch
 
-# In[ ]:
+# In[25]:
 
 
 # ============================================================
@@ -1189,7 +1289,7 @@ print("BinaryImageDataset class ready.")
 
 # ## dataloaders
 
-# In[ ]:
+# In[26]:
 
 
 # ============================================================
@@ -1227,7 +1327,7 @@ print(f"Evaluation batches:{len(eval_loader)}")
 
 # ## create model
 
-# In[ ]:
+# In[27]:
 
 
 # ============================================================
@@ -1290,7 +1390,7 @@ print(model.classifier)
 
 # ## optimizers, schedulers
 
-# In[ ]:
+# In[28]:
 
 
 # ============================================================
@@ -1387,7 +1487,7 @@ print(f"Scheduler: {SCHEDULER_NAME}")
 
 # ## functions
 
-# In[ ]:
+# In[29]:
 
 
 # ============================================================
@@ -1515,7 +1615,7 @@ print("Training and evaluation functions ready.")
 
 # ## run training
 
-# In[ ]:
+# In[30]:
 
 
 # ============================================================
@@ -1639,7 +1739,7 @@ print(f"Best validation F1: {best_val_f1:.4f}")
 
 # # evaluation
 
-# In[ ]:
+# In[31]:
 
 
 # ============================================================
@@ -1692,7 +1792,7 @@ print("=" * 70)
 
 # # log, save, analyze
 
-# In[ ]:
+# In[32]:
 
 
 # ============================================================
@@ -1733,7 +1833,7 @@ print("\nLatest summary rows:")
 display(summary_df.tail())
 
 
-# In[ ]:
+# In[33]:
 
 
 # ============================================================
@@ -1769,7 +1869,7 @@ else:
 # # save outputs in a zip
 # because the outputs are alot, instead of downloading each manually we can just download one zip and it would download in the correct folder structure and we can just paste in github/vscode
 
-# In[ ]:
+# In[34]:
 
 
 import os
