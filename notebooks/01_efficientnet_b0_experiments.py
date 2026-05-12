@@ -113,7 +113,7 @@ else:
 # All important experiment settings should stay here so nobody has to search inside the code.
 
 RUNNER_NAME = "zuha"                       # Change to: "zuha", "izma", or "fatima"
-MODEL_NAME = "efficientnet_b0"             # This notebook is for EfficientNet-B0 experiments
+MODEL_NAME = "01_efficientnet_b0"             # This notebook is for EfficientNet-B0 experiments
 RUN_TYPE = "constrained"                   # Use "constrained" or "open"
 
 # General training settings

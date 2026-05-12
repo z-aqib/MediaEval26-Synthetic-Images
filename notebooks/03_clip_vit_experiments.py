@@ -113,7 +113,7 @@ else:
 # All important experiment settings should stay here so nobody has to search inside the code.
 
 RUNNER_NAME = "zuha"                       # Change to: "zuha", "izma", or "fatima"
-MODEL_NAME = "clip_vit"                    # Folder name for transformer/ViT experiments
+MODEL_NAME = "03_clip_vit"                    # Folder name for transformer/ViT experiments
 RUN_TYPE = "constrained"                   # Use "constrained" or "open"
 
 # This tells us the exact model inside the clip_vit notebook.

@@ -113,7 +113,7 @@ else:
 # All important experiment settings should stay here so nobody has to search inside the code.
 
 RUNNER_NAME = "zuha"                       # Change to: "zuha", "izma", or "fatima"
-MODEL_NAME = "convnext_tiny"               # This notebook is for ConvNeXt-Tiny experiments
+MODEL_NAME = "02_convnext_tiny"               # This notebook is for ConvNeXt-Tiny experiments
 RUN_TYPE = "constrained"                   # Use "constrained" or "open"
 
 # General training settings

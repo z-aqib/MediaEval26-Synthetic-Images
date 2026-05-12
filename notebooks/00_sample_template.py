@@ -193,7 +193,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[33]:
+# In[ ]:
 
 
 # ============================================================
@@ -203,7 +203,7 @@ else:
 # All important experiment settings should stay here so nobody has to search inside the code.
 
 RUNNER_NAME = "zuha"                 # Change to: "zuha", "izma", or "fatima"
-MODEL_NAME = "sample_model"          # Example: "efficientnet_b0", "convnext_tiny", "clip_vit"
+MODEL_NAME = "00_sample_model"          # Example: "efficientnet_b0", "convnext_tiny", "clip_vit"
 RUN_TYPE = "constrained"             # Use "constrained" or "open"
 
 # General training settings
