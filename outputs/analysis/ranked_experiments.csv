@@ -1,0 +1,1 @@
+experiment_id,timestamp,runner,model_name,model_folder,run_type,optimizer,scheduler,augmentation_type,train_datasets_used,evaluation_dataset,notes

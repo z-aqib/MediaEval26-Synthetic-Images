@@ -22,7 +22,7 @@
 
 # # imports
 
-# In[ ]:
+# In[1]:
 
 
 # ============================================================
@@ -47,7 +47,7 @@ print("Imports completed.")
 
 # # variables
 
-# In[ ]:
+# In[2]:
 
 
 # ============================================================
@@ -80,7 +80,7 @@ print(f"Plots directory: {PLOTS_DIR}")
 print(f"Best overall directory: {BEST_OVERALL_DIR}")
 
 
-# In[ ]:
+# In[3]:
 
 
 # ============================================================
@@ -111,7 +111,7 @@ for model_name in MODEL_FOLDERS:
 
 # ## read summaries
 
-# In[ ]:
+# In[4]:
 
 
 # ============================================================
@@ -201,7 +201,7 @@ if len(summary_df) > 0:
 
 # ## clean summaries
 
-# In[ ]:
+# In[5]:
 
 
 # ============================================================
@@ -296,7 +296,7 @@ display(summary_df.head(10))
 
 # ## rank best ACROSS ALL MODELS
 
-# In[ ]:
+# In[6]:
 
 
 # ============================================================
@@ -374,7 +374,7 @@ display(ranked_df[existing_cols].head(20))
 
 # ## rank best FOR EVERY MODEL
 
-# In[ ]:
+# In[7]:
 
 
 # ============================================================
@@ -405,7 +405,7 @@ else:
 
 # ## plot functions
 
-# In[ ]:
+# In[8]:
 
 
 # ============================================================
@@ -485,7 +485,7 @@ print("Plot helper functions ready.")
 
 # ## run plots ACROSS MODELS
 
-# In[ ]:
+# In[9]:
 
 
 # ============================================================
@@ -512,7 +512,7 @@ for metric in ["f1", "accuracy", "roc_auc"]:
 
 # ## run plots FOR EVERY MODEL
 
-# In[ ]:
+# In[10]:
 
 
 # ============================================================
@@ -605,7 +605,7 @@ for param in ["optimizer", "scheduler", "augmentation_type", "run_type", "runner
 
 # ## run plots FOR EVERY MODEL PARAMETER
 
-# In[ ]:
+# In[11]:
 
 
 # ============================================================
@@ -672,7 +672,7 @@ for model_folder in sorted(ranked_df["model_folder"].dropna().unique()):
 
 # ## confusion matrices
 
-# In[ ]:
+# In[12]:
 
 
 # ============================================================
@@ -721,7 +721,7 @@ else:
 
 # ## git helper functions
 
-# In[ ]:
+# In[13]:
 
 
 # ============================================================
@@ -789,7 +789,7 @@ print(f"Current commit: {get_current_git_commit()}")
 
 # ## find commit with best model
 
-# In[ ]:
+# In[14]:
 
 
 # ============================================================
@@ -913,7 +913,7 @@ else:
 
 # ## extract best model from git commit
 
-# In[ ]:
+# In[15]:
 
 
 # ============================================================
@@ -1036,7 +1036,7 @@ else:
 
 # ## fallback: if best not found in git, make current = best
 
-# In[ ]:
+# In[16]:
 
 
 # ============================================================
@@ -1110,7 +1110,7 @@ def copy_current_best_files(best_row):
 
 # # save analysis
 
-# In[ ]:
+# In[17]:
 
 
 # ============================================================
@@ -1158,7 +1158,7 @@ with open(REPORT_PATH, "w") as f:
 print(f"Analysis report saved to: {REPORT_PATH}")
 
 
-# In[ ]:
+# In[18]:
 
 
 # ============================================================
