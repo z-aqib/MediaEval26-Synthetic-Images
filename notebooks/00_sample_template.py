@@ -337,7 +337,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[36]:
+# In[ ]:
 
 
 # ============================================================
@@ -346,22 +346,22 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 # Add all possible Kaggle input dataset paths here.
 # If a path does not exist in a Kaggle notebook, the scanner will simply skip it.
 
-KAGGLE_INPUT_DIR = Path("/kaggle/input")
+KAGGLE_INPUT_DIR = Path("/kaggle/input/datasets")
 
 DATASET_PATHS = {
     # DMImageDetect datasets
-    "dmimagedetect_test": KAGGLE_INPUT_DIR / "dmimagedetect-test",
-    "dmimagedetect_train": KAGGLE_INPUT_DIR / "dmimagedetect-traintest",
-    "dmimagedetect_realraise": KAGGLE_INPUT_DIR / "dmimagedetect-realraise",
+    "dmimagedetect_test": KAGGLE_INPUT_DIR / "izmakhan26926/dmimagedetect-test",
+    "dmimagedetect_train": KAGGLE_INPUT_DIR / "izmakhan26926/dmimagedetect-traintest",
+    "dmimagedetect_realraise": KAGGLE_INPUT_DIR / "s/izmakhan26926/dmimagedetect-realraise",
 
     # Corvi latent diffusion dataset
-    "corvi_latent_diffusion": KAGGLE_INPUT_DIR / "corvi-latent-diffusion-trainingset",
+    "corvi_latent_diffusion": KAGGLE_INPUT_DIR / "izmakhan26926/corvi-latent-diffusion-trainingset",
 
     # Wang CNNDetection dataset
-    "wang_cnndetection": KAGGLE_INPUT_DIR / "wang-cnndetection-dataset",
+    "wang_cnndetection": KAGGLE_INPUT_DIR / "zuhaaqib/wang-cnndetection-dataset",
 
     # Optional weights dataset
-    "clipdet_weights": KAGGLE_INPUT_DIR / "dmimagedetect-clipdetweights",
+    "clipdet_weights": KAGGLE_INPUT_DIR / "izmakhan26926/dmimagedetect-clipdetweights",
 }
 
 print("Checking available Kaggle datasets...\n")
