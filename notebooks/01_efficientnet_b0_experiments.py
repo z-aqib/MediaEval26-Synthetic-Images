@@ -31,6 +31,14 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
+# In[ ]:
+
+
+# Install common packages needed for EfficientNet-B0 training and experiment logging
+# Note: torch and torchvision are already available in Kaggle GPU notebooks, so we avoid reinstalling them
+get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tqdm')
+
+
 # # Imports
 
 # In[ ]:

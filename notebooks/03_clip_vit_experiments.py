@@ -33,6 +33,14 @@
 # 
 # ViT is heavier and more sensitive to hyperparameters. If Kaggle gives a CUDA memory error, reduce `BATCH_SIZE` from `16` to `8`, then to `4` if needed.
 
+# In[ ]:
+
+
+# Install common packages needed for ViT-B/16 training and experiment logging
+# Note: torch and torchvision are already available in Kaggle GPU notebooks, so we avoid reinstalling them
+get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tqdm')
+
+
 # # Imports
 
 # In[ ]:

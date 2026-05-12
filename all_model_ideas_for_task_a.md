@@ -459,6 +459,12 @@ It may perform better than standard ViT when data is not huge.
 
 ## 12. CLIP ViT-B/32 Linear Probe
 
+```python
+# Install packages for OpenCLIP-based experiments
+# Note: torch and torchvision are already available in Kaggle GPU notebooks, so we avoid reinstalling them
+!pip install numpy pandas scikit-learn matplotlib pillow tqdm open_clip_torch
+```
+
 ### What it is
 CLIP is trained on image-text pairs. For this task, we can freeze CLIP and train only a small classifier on top of its image features.
 

@@ -19,6 +19,13 @@
 # 
 # Model-specific code should be added after this template is copied into a model notebook.
 
+# In[ ]:
+
+
+# Install common packages needed for dataset loading, metrics, and logging
+get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tqdm')
+
+
 # In[29]:
 
 
@@ -193,7 +200,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[ ]:
+# In[33]:
 
 
 # ============================================================
