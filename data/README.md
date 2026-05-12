@@ -8,6 +8,4 @@
 
 *DMImageDetect-ClipDetWeights:* https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-clipdetweights/settings 
 
-https://www.kaggle.com/datasets/izmakhan26926/corvi-latent-diffusion-trainingset 
-
 https://www.kaggle.com/datasets/zuhaaqib/wang-cnndetection-dataset
