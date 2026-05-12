@@ -1,0 +1,6 @@
+experiment_id,runner,model_name,epoch,train_loss,val_loss,val_accuracy,val_precision,val_recall,val_f1,val_roc_auc,val_average_precision,val_eer,best_threshold_for_epoch,learning_rate
+20260512_190530_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic,zuha,01_efficientnet_b0,1,0.27938005075852074,0.07645813912153245,1.0,1.0,1.0,1.0,,1.0,,0.05,0.0001
+20260512_190530_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic,zuha,01_efficientnet_b0,2,0.1123084043264389,0.03471411541104317,1.0,1.0,1.0,1.0,,1.0,,0.05,0.0001
+20260512_190530_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic,zuha,01_efficientnet_b0,3,0.06722325704495112,0.04625406420230865,0.998,1.0,0.998,0.998998998998999,,1.0,,0.05,0.0001
+20260512_190530_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic,zuha,01_efficientnet_b0,4,0.044354041601220764,0.033484871804714204,0.998,1.0,0.998,0.998998998998999,,1.0,,0.05,0.0001
+20260512_190530_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic,zuha,01_efficientnet_b0,5,0.027197342522442342,0.02390967904776335,0.998,1.0,0.998,0.998998998998999,,1.0,,0.05,0.0001
