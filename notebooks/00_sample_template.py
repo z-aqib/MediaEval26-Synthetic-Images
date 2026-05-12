@@ -19,7 +19,7 @@
 # 
 # Model-specific code should be added after this template is copied into a model notebook.
 
-# In[15]:
+# In[29]:
 
 
 # ============================================================
@@ -52,7 +52,7 @@
 #       append_summary_row(SUMMARY_CSV_PATH, metrics, best_epoch, best_val_loss)
 
 
-# In[16]:
+# In[30]:
 
 
 # ============================================================
@@ -109,7 +109,7 @@ display(summary_df.tail())
 
 # # Imports
 
-# In[17]:
+# In[31]:
 
 
 # ============================================================
@@ -146,7 +146,7 @@ import torch
 print("Imports completed successfully.")
 
 
-# In[18]:
+# In[32]:
 
 
 # ============================================================
@@ -193,7 +193,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[19]:
+# In[33]:
 
 
 # ============================================================
@@ -238,7 +238,7 @@ print(f"Model: {MODEL_NAME}")
 print(f"Run type: {RUN_TYPE}")
 
 
-# In[20]:
+# In[34]:
 
 
 # ============================================================
@@ -271,6 +271,9 @@ MAX_EVAL_IMAGES = None
 # Supported image extensions
 IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"]
 
+# To avoid training/evaluation leakage, remove eval image paths from train_df.
+REMOVE_EVAL_FROM_TRAIN = True
+
 print("Dataset selection loaded.")
 print("Training dataset choices:")
 print(f"  Wang train: {USE_WANG_TRAIN}")
@@ -280,7 +283,7 @@ print(f"  RealRAISE train: {USE_REALRAISE_TRAIN}")
 print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
 
 
-# In[21]:
+# In[35]:
 
 
 # ============================================================
@@ -327,7 +330,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[22]:
+# In[36]:
 
 
 # ============================================================
@@ -363,7 +366,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[23]:
+# In[37]:
 
 
 # ============================================================
@@ -553,7 +556,7 @@ def print_dataset_summary(df, name):
 
 # ## load dataset
 
-# In[24]:
+# In[38]:
 
 
 # ============================================================
@@ -626,7 +629,32 @@ print_dataset_summary(train_df, "TRAINING DATA")
 print_dataset_summary(eval_df, "FIXED EVALUATION DATA")
 
 
-# In[25]:
+# In[39]:
+
+
+# ============================================================
+# 17. TRAIN/EVALUATION LEAKAGE SAFETY CHECK
+# ============================================================
+# This makes sure the same exact image path is not used for both training and evaluation.
+
+if REMOVE_EVAL_FROM_TRAIN:
+    before_count = len(train_df)
+
+    eval_paths = set(eval_df["filepath"].tolist())
+    train_df = train_df[~train_df["filepath"].isin(eval_paths)].reset_index(drop=True)
+
+    after_count = len(train_df)
+    removed_count = before_count - after_count
+
+    print("Train/evaluation leakage check completed.")
+    print(f"Training images before removal: {before_count}")
+    print(f"Training images after removal:  {after_count}")
+    print(f"Removed overlapping images:      {removed_count}")
+else:
+    print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
+
+
+# In[40]:
 
 
 # ============================================================
@@ -658,7 +686,7 @@ if len(eval_df) > 0:
 
 # ## metric calculation
 
-# In[26]:
+# In[41]:
 
 
 # ============================================================
@@ -792,136 +820,233 @@ print("Metric functions ready.")
 
 # ## logging
 
-# In[27]:
+# In[42]:
 
 
 # ============================================================
-# 10. METRIC CALCULATION FUNCTIONS
+# 11. SAVING AND LOGGING FUNCTIONS
 # ============================================================
-# These functions are shared across all models.
-# They calculate the competition-relevant metrics for Task A.
+# These functions save predictions, training history, config, and summary rows.
 
-def calculate_eer(y_true, y_prob):
+def save_config_json(config_path):
     """
-    Calculate Equal Error Rate (EER).
-
-    EER is the point where false positive rate and false negative rate are approximately equal.
+    Save the current experiment settings into config.json.
 
     Parameters:
-        y_true (array-like): True labels, 0 for real and 1 for synthetic.
-        y_prob (array-like): Predicted probability for synthetic class.
-
-    Returns:
-        float: Equal Error Rate.
+        config_path (Path): Path where config JSON should be saved.
     """
-    fpr, tpr, thresholds = roc_curve(y_true, y_prob)
+    config = {
+        "experiment_id": EXPERIMENT_ID,
+        "timestamp": TIMESTAMP,
+        "runner": RUNNER_NAME,
+        "model_name": MODEL_NAME,
+        "run_type": RUN_TYPE,
 
-    # False negative rate is 1 - true positive rate.
-    fnr = 1 - tpr
+        "epochs": EPOCHS,
+        "batch_size": BATCH_SIZE,
+        "learning_rate": LEARNING_RATE,
+        "optimizer": OPTIMIZER_NAME,
+        "weight_decay": WEIGHT_DECAY,
+        "scheduler": SCHEDULER_NAME,
+        "loss_function": LOSS_FUNCTION_NAME,
 
-    # Find the point where FPR and FNR are closest.
-    eer_index = np.nanargmin(np.abs(fpr - fnr))
-    eer = (fpr[eer_index] + fnr[eer_index]) / 2
+        "image_size": IMAGE_SIZE,
+        "pretrained": PRETRAINED,
+        "freeze_backbone": FREEZE_BACKBONE,
+        "augmentation_type": AUGMENTATION_TYPE,
+        "seed": SEED,
+        "threshold": THRESHOLD,
 
-    return float(eer)
+        "use_wang_train": USE_WANG_TRAIN,
+        "use_corvi_train": USE_CORVI_TRAIN,
+        "use_dmimagedetect_train": USE_DMIMAGEDETECT_TRAIN,
+        "use_realraise_train": USE_REALRAISE_TRAIN,
+        "evaluation_dataset_key": EVALUATION_DATASET_KEY,
 
+        "max_train_images": MAX_TRAIN_IMAGES,
+        "max_eval_images": MAX_EVAL_IMAGES,
 
-def calculate_binary_metrics(y_true, y_prob, threshold=0.5):
-    """
-    Calculate binary classification metrics.
-
-    Parameters:
-        y_true (array-like): True labels, 0 for real and 1 for synthetic.
-        y_prob (array-like): Predicted probability for synthetic class.
-        threshold (float): Decision threshold.
-
-    Returns:
-        dict: Dictionary containing accuracy, precision, recall, F1, AUC, AP, EER, and confusion matrix values.
-    """
-    y_true = np.array(y_true).astype(int)
-    y_prob = np.array(y_prob).astype(float)
-
-    # Convert probabilities into predicted labels using threshold.
-    y_pred = (y_prob >= threshold).astype(int)
-
-    # Basic metrics.
-    accuracy = accuracy_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred, zero_division=0)
-    recall = recall_score(y_true, y_pred, zero_division=0)
-    f1 = f1_score(y_true, y_pred, zero_division=0)
-
-    # Some metrics require both classes to exist.
-    # If only one class exists, sklearn can throw an error, so we handle that safely.
-    try:
-        roc_auc = roc_auc_score(y_true, y_prob)
-    except ValueError:
-        roc_auc = np.nan
-
-    try:
-        avg_precision = average_precision_score(y_true, y_prob)
-    except ValueError:
-        avg_precision = np.nan
-
-    try:
-        eer = calculate_eer(y_true, y_prob)
-    except ValueError:
-        eer = np.nan
-
-    # Confusion matrix values.
-    # Labels are fixed as [0, 1] so output order is always:
-    # [[TN, FP],
-    #  [FN, TP]]
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
-    tn, fp, fn, tp = cm.ravel()
-
-    metrics = {
-        "accuracy": float(accuracy),
-        "precision": float(precision),
-        "recall": float(recall),
-        "f1": float(f1),
-        "roc_auc": float(roc_auc) if not np.isnan(roc_auc) else np.nan,
-        "average_precision": float(avg_precision) if not np.isnan(avg_precision) else np.nan,
-        "eer": float(eer) if not np.isnan(eer) else np.nan,
-        "threshold": float(threshold),
-        "tn": int(tn),
-        "fp": int(fp),
-        "fn": int(fn),
-        "tp": int(tp)
+        "experiment_notes": EXPERIMENT_NOTES
     }
 
-    return metrics
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=4)
+
+    print(f"Config saved to: {config_path}")
 
 
-def find_best_f1_threshold(y_true, y_prob, thresholds=None):
+def save_predictions_csv(eval_dataframe, y_prob, threshold, predictions_path):
     """
-    Find the threshold that gives the best F1 score.
+    Save latest evaluation predictions to predictions.csv.
 
     Parameters:
-        y_true (array-like): True labels.
-        y_prob (array-like): Predicted probabilities.
-        thresholds (list or None): Thresholds to test.
+        eval_dataframe (pd.DataFrame): Evaluation dataframe with filepath and true label.
+        y_prob (array-like): Predicted probability for synthetic class.
+        threshold (float): Decision threshold.
+        predictions_path (Path): Output CSV path.
 
     Returns:
-        tuple: best_threshold, best_f1
+        pd.DataFrame: Predictions dataframe.
     """
-    if thresholds is None:
-        thresholds = np.arange(0.05, 0.96, 0.05)
+    y_prob = np.array(y_prob).astype(float)
+    y_pred = (y_prob >= threshold).astype(int)
 
-    best_threshold = 0.5
-    best_f1 = -1
+    pred_df = eval_dataframe.copy()
+    pred_df["experiment_id"] = EXPERIMENT_ID
+    pred_df["runner"] = RUNNER_NAME
+    pred_df["model_name"] = MODEL_NAME
+    pred_df["true_label"] = pred_df["label"].astype(int)
+    pred_df["pred_prob"] = y_prob
+    pred_df["threshold"] = threshold
+    pred_df["pred_label"] = y_pred
+    pred_df["correct"] = pred_df["true_label"] == pred_df["pred_label"]
 
-    for threshold in thresholds:
-        y_pred = (np.array(y_prob) >= threshold).astype(int)
-        current_f1 = f1_score(y_true, y_pred, zero_division=0)
+    # Reorder important columns first.
+    first_cols = [
+        "experiment_id",
+        "runner",
+        "model_name",
+        "filepath",
+        "image_name",
+        "true_label",
+        "pred_prob",
+        "threshold",
+        "pred_label",
+        "correct",
+        "source_dataset",
+        "generator"
+    ]
 
-        if current_f1 > best_f1:
-            best_f1 = current_f1
-            best_threshold = threshold
+    remaining_cols = [col for col in pred_df.columns if col not in first_cols]
+    pred_df = pred_df[first_cols + remaining_cols]
 
-    return float(best_threshold), float(best_f1)
+    pred_df.to_csv(predictions_path, index=False)
+
+    print(f"Predictions saved to: {predictions_path}")
+    print(f"Total predictions saved: {len(pred_df)}")
+
+    return pred_df
 
 
-print("Metric functions ready.")
+def save_training_history_csv(history, history_path):
+    """
+    Save latest training history to training_history.csv.
+
+    Parameters:
+        history (list of dict): One dictionary per epoch.
+        history_path (Path): Output CSV path.
+
+    Returns:
+        pd.DataFrame: History dataframe.
+    """
+    history_df = pd.DataFrame(history)
+
+    if len(history_df) > 0:
+        history_df["experiment_id"] = EXPERIMENT_ID
+        history_df["runner"] = RUNNER_NAME
+        history_df["model_name"] = MODEL_NAME
+
+        # Put important columns first.
+        first_cols = ["experiment_id", "runner", "model_name"]
+        remaining_cols = [col for col in history_df.columns if col not in first_cols]
+        history_df = history_df[first_cols + remaining_cols]
+
+    history_df.to_csv(history_path, index=False)
+
+    print(f"Training history saved to: {history_path}")
+    print(f"History rows saved: {len(history_df)}")
+
+    return history_df
+
+
+def append_summary_row(summary_path, metrics, best_epoch=None, best_val_loss=None):
+    """
+    Append one row to the model summary CSV.
+
+    Parameters:
+        summary_path (Path): Model summary CSV path.
+        metrics (dict): Final evaluation metrics.
+        best_epoch (int or None): Best epoch number.
+        best_val_loss (float or None): Best validation loss.
+
+    Returns:
+        pd.DataFrame: Full updated summary dataframe.
+    """
+    train_real_count = int((train_df["label"] == 0).sum()) if len(train_df) > 0 else 0
+    train_synth_count = int((train_df["label"] == 1).sum()) if len(train_df) > 0 else 0
+    eval_real_count = int((eval_df["label"] == 0).sum()) if len(eval_df) > 0 else 0
+    eval_synth_count = int((eval_df["label"] == 1).sum()) if len(eval_df) > 0 else 0
+
+    train_datasets_used = ",".join(sorted(train_df["source_dataset"].unique())) if len(train_df) > 0 else ""
+
+    row = {
+        "experiment_id": EXPERIMENT_ID,
+        "timestamp": TIMESTAMP,
+        "runner": RUNNER_NAME,
+        "model_name": MODEL_NAME,
+        "run_type": RUN_TYPE,
+
+        "epochs": EPOCHS,
+        "batch_size": BATCH_SIZE,
+        "learning_rate": LEARNING_RATE,
+        "optimizer": OPTIMIZER_NAME,
+        "weight_decay": WEIGHT_DECAY,
+        "scheduler": SCHEDULER_NAME,
+        "loss_function": LOSS_FUNCTION_NAME,
+
+        "image_size": IMAGE_SIZE,
+        "pretrained": PRETRAINED,
+        "freeze_backbone": FREEZE_BACKBONE,
+        "augmentation_type": AUGMENTATION_TYPE,
+        "seed": SEED,
+
+        "train_datasets_used": train_datasets_used,
+        "evaluation_dataset": EVALUATION_DATASET_KEY,
+        "num_train_images": len(train_df),
+        "num_eval_images": len(eval_df),
+        "real_train_count": train_real_count,
+        "synthetic_train_count": train_synth_count,
+        "real_eval_count": eval_real_count,
+        "synthetic_eval_count": eval_synth_count,
+
+        "best_epoch": best_epoch,
+        "best_val_loss": best_val_loss,
+
+        "accuracy": metrics.get("accuracy"),
+        "precision": metrics.get("precision"),
+        "recall": metrics.get("recall"),
+        "f1": metrics.get("f1"),
+        "roc_auc": metrics.get("roc_auc"),
+        "average_precision": metrics.get("average_precision"),
+        "eer": metrics.get("eer"),
+        "threshold": metrics.get("threshold"),
+
+        "tn": metrics.get("tn"),
+        "fp": metrics.get("fp"),
+        "fn": metrics.get("fn"),
+        "tp": metrics.get("tp"),
+
+        "notes": EXPERIMENT_NOTES
+    }
+
+    row_df = pd.DataFrame([row])
+
+    # If summary CSV already exists, append to it.
+    if summary_path.exists():
+        old_summary_df = pd.read_csv(summary_path)
+        updated_summary_df = pd.concat([old_summary_df, row_df], ignore_index=True)
+    else:
+        updated_summary_df = row_df
+
+    updated_summary_df.to_csv(summary_path, index=False)
+
+    print(f"Summary row appended to: {summary_path}")
+    print(f"Total experiments logged for {MODEL_NAME}: {len(updated_summary_df)}")
+
+    return updated_summary_df
+
+
+print("Saving and logging functions ready.")
 
 
 # # ADD MODEL CODE HERE AND DELETE THIS MARKDOWN
@@ -929,7 +1054,7 @@ print("Metric functions ready.")
 # # save outputs in a zip
 # because the outputs are alot, instead of downloading each manually we can just download one zip and it would download in the correct folder structure and we can just paste in github/vscode
 
-# In[28]:
+# In[43]:
 
 
 import os
