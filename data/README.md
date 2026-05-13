@@ -1,11 +1,11 @@
-*DMImageDetect-Test:* https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-test 
+*DMImageDetect-Test*: https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-test 
 
-*corvi_latent_diffusion_trainingset:* https://www.kaggle.com/datasets/izmakhan26926/corvi-latent-diffusion-trainingset 
+*corvi_latent_diffusion_trainingset*: https://www.kaggle.com/datasets/izmakhan26926/corvi-latent-diffusion-trainingset 
 
-*DMImageDetect-RealRAISE:* https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-realraise 
+*DMImageDetect-RealRAISE*: https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-realraise 
 
-*DMImageDetect-Train:* https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-traintest 
+*DMImageDetect-Train*: https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-traintest 
 
-*DMImageDetect-ClipDetWeights:* https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-clipdetweights/settings 
+*DMImageDetect-ClipDetWeights*: https://www.kaggle.com/datasets/izmakhan26926/dmimagedetect-clipdetweights
 
-https://www.kaggle.com/datasets/zuhaaqib/wang-cnndetection-dataset
+*Wang-CNNDetection-Dataset*: https://www.kaggle.com/datasets/zuhaaqib/wang-cnndetection-dataset
