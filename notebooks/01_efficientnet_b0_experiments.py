@@ -31,7 +31,7 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
-# In[ ]:
+# In[1]:
 
 
 # Install common packages needed for EfficientNet-B0 training and experiment logging
@@ -41,7 +41,7 @@ get_ipython().run_line_magic('pip', 'install numpy pandas scikit-learn matplotli
 
 # # Imports
 
-# In[ ]:
+# In[2]:
 
 
 # ============================================================
@@ -94,7 +94,7 @@ from torchvision.models import EfficientNet_B0_Weights
 print("EfficientNet-specific imports completed.")
 
 
-# In[ ]:
+# In[3]:
 
 
 # ============================================================
@@ -141,7 +141,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[ ]:
+# In[4]:
 
 
 # ============================================================
@@ -209,7 +209,7 @@ print(f"USE_AMP: {USE_AMP}")
 print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 
 
-# In[ ]:
+# In[5]:
 
 
 # ============================================================
@@ -284,7 +284,7 @@ print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
 print(f"Fixed eval real/synthetic: {MAX_EVAL_REAL}/{MAX_EVAL_SYNTHETIC}")
 
 
-# In[ ]:
+# In[6]:
 
 
 # ============================================================
@@ -331,7 +331,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[ ]:
+# In[7]:
 
 
 # ============================================================
@@ -367,7 +367,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[ ]:
+# In[8]:
 
 
 # ============================================================
@@ -855,7 +855,7 @@ def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, m
 
 # ## load dataset
 
-# In[ ]:
+# In[9]:
 
 
 # ============================================================
@@ -1025,7 +1025,7 @@ print("[build_data] DONE building training and evaluation dataframes")
 print("#" * 80)
 
 
-# In[ ]:
+# In[10]:
 
 
 # ============================================================
@@ -1050,7 +1050,7 @@ else:
     print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
 
 
-# In[ ]:
+# In[11]:
 
 
 # Quick check to see what Kaggle paths actually exist
@@ -1058,7 +1058,7 @@ for item in Path("/kaggle/input").iterdir():
     print(item)
 
 
-# In[ ]:
+# In[12]:
 
 
 # ============================================================
@@ -1088,7 +1088,7 @@ print("\nEvaluation dataframe preview:")
 display(eval_df.head())
 
 
-# In[ ]:
+# In[13]:
 
 
 # ============================================================
@@ -1135,7 +1135,7 @@ print("Hard dataset safety checks passed.")
 
 # ## metric calculation
 
-# In[ ]:
+# In[14]:
 
 
 # ============================================================
@@ -1269,7 +1269,7 @@ print("Metric functions ready.")
 
 # ## logging
 
-# In[ ]:
+# In[15]:
 
 
 # ============================================================
@@ -1513,7 +1513,7 @@ print("Saving and logging functions ready.")
 
 # ## image transform
 
-# In[ ]:
+# In[16]:
 
 
 # ============================================================
@@ -1610,7 +1610,7 @@ print(f"Training augmentation type: {AUGMENTATION_TYPE}")
 
 # ## pytorch
 
-# In[ ]:
+# In[17]:
 
 
 # ============================================================
@@ -1677,7 +1677,7 @@ print("BinaryImageDataset class ready.")
 
 # ## dataloaders
 
-# In[ ]:
+# In[18]:
 
 
 # ============================================================
@@ -1715,7 +1715,7 @@ print(f"Evaluation batches:{len(eval_loader)}")
 
 # ## create model
 
-# In[ ]:
+# In[19]:
 
 
 # ============================================================
@@ -1778,7 +1778,7 @@ print(model.classifier)
 
 # ## optimizers, schedulers
 
-# In[ ]:
+# In[20]:
 
 
 # ============================================================
@@ -1875,7 +1875,7 @@ print(f"Scheduler: {SCHEDULER_NAME}")
 
 # ## functions
 
-# In[ ]:
+# In[21]:
 
 
 # ============================================================
@@ -2003,7 +2003,7 @@ print("Training and evaluation functions ready.")
 
 # ## run training
 
-# In[ ]:
+# In[22]:
 
 
 # ============================================================
@@ -2127,7 +2127,7 @@ print(f"Best validation F1: {best_val_f1:.4f}")
 
 # # evaluation
 
-# In[ ]:
+# In[23]:
 
 
 # ============================================================
@@ -2180,7 +2180,7 @@ print("=" * 70)
 
 # # log, save, analyze
 
-# In[ ]:
+# In[24]:
 
 
 # ============================================================
@@ -2221,7 +2221,7 @@ print("\nLatest summary rows:")
 display(summary_df.tail())
 
 
-# In[ ]:
+# In[25]:
 
 
 # ============================================================
@@ -2257,7 +2257,7 @@ else:
 # # save outputs in a zip
 # because the outputs are alot, instead of downloading each manually we can just download one zip and it would download in the correct folder structure and we can just paste in github/vscode
 
-# In[ ]:
+# In[26]:
 
 
 import os
