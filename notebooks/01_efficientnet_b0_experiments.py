@@ -31,7 +31,7 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
-# In[1]:
+# In[ ]:
 
 
 # Install common packages needed for EfficientNet-B0 training and experiment logging
@@ -41,7 +41,7 @@ get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tq
 
 # # Imports
 
-# In[2]:
+# In[ ]:
 
 
 # ============================================================
@@ -94,7 +94,7 @@ from torchvision.models import EfficientNet_B0_Weights
 print("EfficientNet-specific imports completed.")
 
 
-# In[3]:
+# In[ ]:
 
 
 # ============================================================
@@ -141,7 +141,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[4]:
+# In[ ]:
 
 
 # ============================================================
@@ -209,52 +209,51 @@ print(f"USE_AMP: {USE_AMP}")
 print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 
 
-# In[5]:
+# In[ ]:
 
 
 # ============================================================
 # 2. DATASET SELECTION BLOCK
 # ============================================================
 # Training datasets can be changed by the runner.
-# Evaluation dataset should remain the same for ALL models for fair comparison.
+# Evaluation dataset must stay fixed across ALL model notebooks.
 
 # ----------------------------
 # Training dataset choices
 # ----------------------------
 
-# We will use Wang only from its train split for training.
+# Constrained training data
 USE_WANG_TRAIN = True
-
-# Corvi has latent diffusion synthetic images, so it is useful for training.
 USE_CORVI_TRAIN = True
 
-# DMImageDetect train has only synthetic files available because COCO real images are missing.
-# We can still use its available fake images for training, but not for evaluation.
-USE_DMIMAGEDETECT_TRAIN = True
-
-# RealRAISE is real images only. Keep False for baseline unless you want to add more real images.
+# Open-run extra training data
+USE_DMIMAGEDETECT_TRAIN = False
 USE_REALRAISE_TRAIN = False
+
+# Optional Wang extra splits for open-run experiments only
+USE_WANG_VAL_AS_TRAIN = False
+USE_WANG_TEST_AS_TRAIN = False
 
 # ----------------------------
 # Fixed evaluation dataset
 # ----------------------------
 
-# Use Wang validation/test split for evaluation because it has both 0_real and 1_fake folders.
-EVALUATION_DATASET_KEY = "wang_cnndetection"
+# Fixed eval for fair comparison across EfficientNet, ConvNeXt, ViT/CLIP, etc.
+EVALUATION_DATASET_KEY = "dmimagedetect_test"
 
-# Choose which Wang split to use for evaluation.
-# Recommended: "val" for experiment validation.
-# Later, use "test" for final reporting if needed.
-WANG_EVAL_SPLIT = "val"       # Options: "val", "test"
+# Balanced eval size
+MAX_EVAL_REAL = 5000
+MAX_EVAL_SYNTHETIC = 5000
 
-# Limit images for quick debugging.
-# Use small numbers first to check if the notebook works.
-# Then increase or set to None for full run.
+# Training image limit
+# Use small value for debugging, None for full run.
 MAX_TRAIN_IMAGES = 6000
-MAX_EVAL_IMAGES = 2000
 
 # Supported image extensions
 IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"]
+
+# Avoid exact filepath leakage
+REMOVE_EVAL_FROM_TRAIN = True
 
 print("Dataset selection loaded.")
 print("Training dataset choices:")
@@ -262,10 +261,13 @@ print(f"  Wang train: {USE_WANG_TRAIN}")
 print(f"  Corvi train: {USE_CORVI_TRAIN}")
 print(f"  DMImageDetect train: {USE_DMIMAGEDETECT_TRAIN}")
 print(f"  RealRAISE train: {USE_REALRAISE_TRAIN}")
+print(f"  Wang val as train: {USE_WANG_VAL_AS_TRAIN}")
+print(f"  Wang test as train: {USE_WANG_TEST_AS_TRAIN}")
 print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
+print(f"Fixed eval real/synthetic: {MAX_EVAL_REAL}/{MAX_EVAL_SYNTHETIC}")
 
 
-# In[6]:
+# In[ ]:
 
 
 # ============================================================
@@ -312,7 +314,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[7]:
+# In[ ]:
 
 
 # ============================================================
@@ -348,7 +350,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[8]:
+# In[ ]:
 
 
 # ============================================================
@@ -658,22 +660,107 @@ def load_dmimagedetect_fake_from_csv(dataset_key, dataset_path, max_images=None)
 
     return df
 
+def infer_dmimagedetect_test_label(path):
+    """
+    Infer labels specifically for DMImageDetect-Test.
+
+    Label convention:
+        0 = real
+        1 = synthetic
+
+    Real folders start with 'real_'.
+    All other image folders inside test_set are treated as synthetic.
+    """
+    parts = [part.lower() for part in path.parts]
+
+    # If any folder starts with real_, it is a real image.
+    for part in parts:
+        if part.startswith("real_"):
+            return 0
+
+    # All other folders in DMImageDetect-Test are synthetic generator folders.
+    return 1
+
+
+def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, max_synthetic=5000):
+    """
+    Load a balanced fixed evaluation set from DMImageDetect-Test.
+
+    This keeps the eval set the same for all models:
+        - max_real real images
+        - max_synthetic synthetic images
+
+    The function shuffles with SEED so every model notebook gets the same fixed subset.
+    """
+    test_path = dataset_path / "test_set"
+
+    if not test_path.exists():
+        print(f"[SKIP] DMImageDetect test path not found: {test_path}")
+        return pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
+
+    real_rows = []
+    synthetic_rows = []
+
+    image_paths = [
+        p for p in test_path.rglob("*")
+        if p.is_file() and is_image_file(p)
+    ]
+
+    # Shuffle once so the fixed subset is not folder-order biased.
+    random.Random(SEED).shuffle(image_paths)
+
+    for image_path in image_paths:
+        label = infer_dmimagedetect_test_label(image_path)
+
+        row = {
+            "filepath": str(image_path),
+            "image_name": image_path.name,
+            "label": label,
+            "source_dataset": dataset_key,
+            "generator": image_path.parent.name
+        }
+
+        if label == 0 and len(real_rows) < max_real:
+            real_rows.append(row)
+
+        elif label == 1 and len(synthetic_rows) < max_synthetic:
+            synthetic_rows.append(row)
+
+        # Stop once both classes reached the target.
+        if len(real_rows) >= max_real and len(synthetic_rows) >= max_synthetic:
+            break
+
+    df = pd.DataFrame(real_rows + synthetic_rows)
+
+    # Shuffle final eval rows so all real/fake are mixed.
+    df = df.sample(frac=1, random_state=SEED).reset_index(drop=True)
+
+    print(f"[DMIMAGEDETECT TEST BALANCED LOAD] {dataset_key}")
+    print(f"  Test path: {test_path}")
+    print(f"  Real loaded: {len(real_rows)}")
+    print(f"  Synthetic loaded: {len(synthetic_rows)}")
+    print(f"  Total loaded: {len(df)}")
+
+    if len(df) > 0:
+        print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
+
+    return df
+
 
 # ## load dataset
 
-# In[9]:
+# In[ ]:
 
 
 # ============================================================
 # 8. BUILD TRAINING AND EVALUATION DATAFRAMES
 # ============================================================
 # Training data is selectable.
-# Evaluation data should stay fixed for all models.
+# Evaluation data is fixed for all models.
 
 train_dfs = []
 
-# Add Wang TRAIN split only.
-# Important: do not scan the whole Wang dataset, because eval will also come from Wang.
+# Add Wang TRAIN split only for constrained training.
 if USE_WANG_TRAIN:
     train_dfs.append(
         scan_wang_split(
@@ -684,8 +771,29 @@ if USE_WANG_TRAIN:
         )
     )
 
-# Add Corvi dataset to training.
-# Corvi is mostly synthetic latent diffusion data.
+# Add Wang VAL split only if explicitly selected for open-run training.
+if USE_WANG_VAL_AS_TRAIN:
+    train_dfs.append(
+        scan_wang_split(
+            dataset_key="wang_cnndetection",
+            dataset_path=DATASET_PATHS["wang_cnndetection"],
+            split_name="val",
+            max_images=MAX_TRAIN_IMAGES
+        )
+    )
+
+# Add Wang TEST split only if explicitly selected for open-run training.
+if USE_WANG_TEST_AS_TRAIN:
+    train_dfs.append(
+        scan_wang_split(
+            dataset_key="wang_cnndetection",
+            dataset_path=DATASET_PATHS["wang_cnndetection"],
+            split_name="test",
+            max_images=MAX_TRAIN_IMAGES
+        )
+    )
+
+# Add Corvi synthetic training data.
 if USE_CORVI_TRAIN:
     train_dfs.append(
         scan_dataset(
@@ -695,8 +803,8 @@ if USE_CORVI_TRAIN:
         )
     )
 
-# Add only available synthetic DMImageDetect images from CSV.
-# We do not use filename0 because COCO real images are missing.
+# Add only available synthetic DMImageDetect train images.
+# This is open-run extra data, not constrained.
 if USE_DMIMAGEDETECT_TRAIN:
     train_dfs.append(
         load_dmimagedetect_fake_from_csv(
@@ -706,7 +814,8 @@ if USE_DMIMAGEDETECT_TRAIN:
         )
     )
 
-# Add RealRAISE if selected.
+# Add RealRAISE real images.
+# This is open-run extra data, useful to balance fake-heavy training.
 if USE_REALRAISE_TRAIN:
     train_dfs.append(
         scan_dataset(
@@ -716,22 +825,21 @@ if USE_REALRAISE_TRAIN:
         )
     )
 
-# Combine all selected training datasets.
+# Combine selected training datasets.
 if len(train_dfs) > 0:
     train_df = pd.concat(train_dfs, ignore_index=True)
 else:
     train_df = pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
 
-# Remove duplicate filepaths just in case.
+# Remove duplicate training filepaths.
 train_df = train_df.drop_duplicates(subset=["filepath"]).reset_index(drop=True)
 
-# Build fixed evaluation dataframe from Wang val/test only.
-# This gives both real and fake labels.
-eval_df = scan_wang_split(
+# Build fixed balanced evaluation dataframe from DMImageDetect-Test.
+eval_df = scan_dmimagedetect_test_balanced(
     dataset_key=EVALUATION_DATASET_KEY,
     dataset_path=DATASET_PATHS[EVALUATION_DATASET_KEY],
-    split_name=WANG_EVAL_SPLIT,
-    max_images=MAX_EVAL_IMAGES
+    max_real=MAX_EVAL_REAL,
+    max_synthetic=MAX_EVAL_SYNTHETIC
 )
 
 eval_df = eval_df.drop_duplicates(subset=["filepath"]).reset_index(drop=True)
@@ -740,7 +848,7 @@ print_dataset_summary(train_df, "TRAINING DATA")
 print_dataset_summary(eval_df, "FIXED EVALUATION DATA")
 
 
-# In[10]:
+# In[ ]:
 
 
 # ============================================================
@@ -765,20 +873,27 @@ else:
     print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
 
 
-# In[11]:
+# In[ ]:
 
-
-print(train_df["label"].value_counts())
 
 # Quick check to see what Kaggle paths actually exist
 for item in Path("/kaggle/input").iterdir():
     print(item)
 
+
+# In[ ]:
+
+
+# ============================================================
+# 9. OPTIONAL DATASET CHECK
+# ============================================================
+# This cell helps verify that paths, labels, and sources are correct.
+
 print("Train label counts:")
-print(train_df["label"].value_counts())
+print(train_df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
 
 print("\nEval label counts:")
-print(eval_df["label"].value_counts())
+print(eval_df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
 
 print("\nTrain sources:")
 print(train_df["source_dataset"].value_counts())
@@ -786,40 +901,64 @@ print(train_df["source_dataset"].value_counts())
 print("\nEval sources:")
 print(eval_df["source_dataset"].value_counts())
 
+print("\nEval generator sample:")
+print(eval_df["generator"].value_counts().head(20))
 
-# In[12]:
-
-
-# ============================================================
-# 9. OPTIONAL DATASET CHECK
-# ============================================================
-# This cell helps us quickly see whether labels were inferred correctly.
-
-print("Training dataframe preview:")
+print("\nTraining dataframe preview:")
 display(train_df.head())
 
 print("\nEvaluation dataframe preview:")
 display(eval_df.head())
 
-# Check if we have both classes in training and evaluation.
-if len(train_df) > 0:
-    train_labels = set(train_df["label"].unique())
-    print(f"\nTrain labels found: {train_labels}")
-    if train_labels != {0, 1}:
-        print("WARNING: Training set does not contain both real and synthetic labels.")
 
-if len(eval_df) > 0:
-    eval_labels = set(eval_df["label"].unique())
-    print(f"Evaluation labels found: {eval_labels}")
-    if eval_labels != {0, 1}:
-        print("WARNING: Evaluation set does not contain both real and synthetic labels.")
+# In[ ]:
+
+
+# ============================================================
+# 18. HARD DATASET SAFETY CHECKS
+# ============================================================
+# Stop early if the dataset setup is wrong.
+# This prevents wasting time on a broken training run.
+
+if len(train_df) == 0:
+    raise ValueError(
+        "Training dataframe is empty. Check Kaggle dataset paths and selected training datasets."
+    )
+
+if len(eval_df) == 0:
+    raise ValueError(
+        "Evaluation dataframe is empty. Check DMImageDetect-Test path and fixed eval loader."
+    )
+
+train_labels = set(train_df["label"].unique())
+eval_labels = set(eval_df["label"].unique())
+
+if train_labels != {0, 1}:
+    raise ValueError(
+        f"Training set must contain both classes 0=real and 1=synthetic. Found: {train_labels}"
+    )
+
+if eval_labels != {0, 1}:
+    raise ValueError(
+        f"Evaluation set must contain both classes 0=real and 1=synthetic. Found: {eval_labels}"
+    )
+
+eval_real_count = int((eval_df["label"] == 0).sum())
+eval_synth_count = int((eval_df["label"] == 1).sum())
+
+if eval_real_count != eval_synth_count:
+    raise ValueError(
+        f"Evaluation set is not balanced. Real={eval_real_count}, Synthetic={eval_synth_count}"
+    )
+
+print("Hard dataset safety checks passed.")
 
 
 # # functions
 
 # ## metric calculation
 
-# In[13]:
+# In[ ]:
 
 
 # ============================================================
@@ -953,7 +1092,7 @@ print("Metric functions ready.")
 
 # ## logging
 
-# In[14]:
+# In[ ]:
 
 
 # ============================================================
@@ -994,10 +1133,13 @@ def save_config_json(config_path):
         "use_corvi_train": USE_CORVI_TRAIN,
         "use_dmimagedetect_train": USE_DMIMAGEDETECT_TRAIN,
         "use_realraise_train": USE_REALRAISE_TRAIN,
+        "use_wang_val_as_train": USE_WANG_VAL_AS_TRAIN,
+        "use_wang_test_as_train": USE_WANG_TEST_AS_TRAIN,
         "evaluation_dataset_key": EVALUATION_DATASET_KEY,
 
         "max_train_images": MAX_TRAIN_IMAGES,
-        "max_eval_images": MAX_EVAL_IMAGES,
+        "max_eval_real": MAX_EVAL_REAL,
+        "max_eval_synthetic": MAX_EVAL_SYNTHETIC,
 
         "experiment_notes": EXPERIMENT_NOTES
     }
@@ -1186,7 +1328,7 @@ print("Saving and logging functions ready.")
 
 # ## image transform
 
-# In[15]:
+# In[ ]:
 
 
 # ============================================================
@@ -1283,7 +1425,7 @@ print(f"Training augmentation type: {AUGMENTATION_TYPE}")
 
 # ## pytorch
 
-# In[16]:
+# In[ ]:
 
 
 # ============================================================
@@ -1350,7 +1492,7 @@ print("BinaryImageDataset class ready.")
 
 # ## dataloaders
 
-# In[17]:
+# In[ ]:
 
 
 # ============================================================
@@ -1388,7 +1530,7 @@ print(f"Evaluation batches:{len(eval_loader)}")
 
 # ## create model
 
-# In[18]:
+# In[ ]:
 
 
 # ============================================================
@@ -1451,7 +1593,7 @@ print(model.classifier)
 
 # ## optimizers, schedulers
 
-# In[19]:
+# In[ ]:
 
 
 # ============================================================
@@ -1548,7 +1690,7 @@ print(f"Scheduler: {SCHEDULER_NAME}")
 
 # ## functions
 
-# In[20]:
+# In[ ]:
 
 
 # ============================================================
@@ -1676,7 +1818,7 @@ print("Training and evaluation functions ready.")
 
 # ## run training
 
-# In[21]:
+# In[ ]:
 
 
 # ============================================================
@@ -1800,7 +1942,7 @@ print(f"Best validation F1: {best_val_f1:.4f}")
 
 # # evaluation
 
-# In[22]:
+# In[ ]:
 
 
 # ============================================================
@@ -1853,7 +1995,7 @@ print("=" * 70)
 
 # # log, save, analyze
 
-# In[23]:
+# In[ ]:
 
 
 # ============================================================
@@ -1894,7 +2036,7 @@ print("\nLatest summary rows:")
 display(summary_df.tail())
 
 
-# In[24]:
+# In[ ]:
 
 
 # ============================================================
@@ -1930,7 +2072,7 @@ else:
 # # save outputs in a zip
 # because the outputs are alot, instead of downloading each manually we can just download one zip and it would download in the correct folder structure and we can just paste in github/vscode
 
-# In[25]:
+# In[ ]:
 
 
 import os
