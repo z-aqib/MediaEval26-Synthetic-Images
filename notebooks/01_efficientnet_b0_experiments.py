@@ -31,17 +31,17 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
-# In[19]:
+# In[ ]:
 
 
 # Install common packages needed for EfficientNet-B0 training and experiment logging
 # Note: torch and torchvision are already available in Kaggle GPU notebooks, so we avoid reinstalling them
-get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tqdm')
+get_ipython().run_line_magic('pip', 'install numpy pandas scikit-learn matplotlib pillow tqdm')
 
 
 # # Imports
 
-# In[20]:
+# In[ ]:
 
 
 # ============================================================
@@ -94,7 +94,7 @@ from torchvision.models import EfficientNet_B0_Weights
 print("EfficientNet-specific imports completed.")
 
 
-# In[21]:
+# In[ ]:
 
 
 # ============================================================
@@ -141,7 +141,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[22]:
+# In[ ]:
 
 
 # ============================================================
@@ -209,7 +209,7 @@ print(f"USE_AMP: {USE_AMP}")
 print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 
 
-# In[23]:
+# In[ ]:
 
 
 # ============================================================
@@ -222,17 +222,32 @@ print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 # Training dataset choices
 # ----------------------------
 
-# Constrained training data
-USE_WANG_TRAIN = True
+# IMPORTANT:
+# Our uploaded Wang dataset does NOT have train/train.
+# It only has:
+#   cnn_synth_test/cnn_synth_test
+#   val/val
+#   test/test
+#
+# So keep USE_WANG_TRAIN=False.
+USE_WANG_TRAIN = False
+
+# Use Wang val as the real+synthetic training source for the first baseline.
+USE_WANG_VAL_AS_TRAIN = True
+
+# Keep Wang test OFF for now so it remains available for later internal checks.
+USE_WANG_TEST_AS_TRAIN = False
+
+# Optional larger Wang source.
+# Keep False for first run. Turn True later if we want more Wang training data.
+USE_WANG_CNN_SYNTH_TEST_AS_TRAIN = False
+
+# Corvi is synthetic-only latent diffusion data.
 USE_CORVI_TRAIN = True
 
-# Open-run extra training data
+# Open-run extra training data.
 USE_DMIMAGEDETECT_TRAIN = False
 USE_REALRAISE_TRAIN = False
-
-# Optional Wang extra splits for open-run experiments only
-USE_WANG_VAL_AS_TRAIN = False
-USE_WANG_TEST_AS_TRAIN = False
 
 # ----------------------------
 # Fixed evaluation dataset
@@ -241,12 +256,13 @@ USE_WANG_TEST_AS_TRAIN = False
 # Fixed eval for fair comparison across EfficientNet, ConvNeXt, ViT/CLIP, etc.
 EVALUATION_DATASET_KEY = "dmimagedetect_test"
 
-# Balanced eval size
-MAX_EVAL_REAL = 5000
-MAX_EVAL_SYNTHETIC = 5000
+# Our uploaded DMImageDetect-Test has 4 real folders with 1000 images each,
+# so use 4000 real + 4000 synthetic for balanced evaluation.
+MAX_EVAL_REAL = 4000
+MAX_EVAL_SYNTHETIC = 4000
 
-# Training image limit
-# Use small value for debugging, None for full run.
+# Training image limit per selected dataset.
+# Wang val will give real+synthetic, Corvi will give synthetic.
 MAX_TRAIN_IMAGES = 6000
 
 # Supported image extensions
@@ -258,16 +274,17 @@ REMOVE_EVAL_FROM_TRAIN = True
 print("Dataset selection loaded.")
 print("Training dataset choices:")
 print(f"  Wang train: {USE_WANG_TRAIN}")
+print(f"  Wang val as train: {USE_WANG_VAL_AS_TRAIN}")
+print(f"  Wang test as train: {USE_WANG_TEST_AS_TRAIN}")
+print(f"  Wang cnn_synth_test as train: {USE_WANG_CNN_SYNTH_TEST_AS_TRAIN}")
 print(f"  Corvi train: {USE_CORVI_TRAIN}")
 print(f"  DMImageDetect train: {USE_DMIMAGEDETECT_TRAIN}")
 print(f"  RealRAISE train: {USE_REALRAISE_TRAIN}")
-print(f"  Wang val as train: {USE_WANG_VAL_AS_TRAIN}")
-print(f"  Wang test as train: {USE_WANG_TEST_AS_TRAIN}")
 print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
 print(f"Fixed eval real/synthetic: {MAX_EVAL_REAL}/{MAX_EVAL_SYNTHETIC}")
 
 
-# In[24]:
+# In[ ]:
 
 
 # ============================================================
@@ -314,7 +331,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[25]:
+# In[ ]:
 
 
 # ============================================================
@@ -350,7 +367,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[26]:
+# In[ ]:
 
 
 # ============================================================
@@ -838,7 +855,7 @@ def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, m
 
 # ## load dataset
 
-# In[27]:
+# In[ ]:
 
 
 # ============================================================
@@ -853,11 +870,12 @@ print("#" * 80)
 
 print("[build_data] Current dataset switches:")
 print(f"[build_data] USE_WANG_TRAIN = {USE_WANG_TRAIN}")
+print(f"[build_data] USE_WANG_VAL_AS_TRAIN = {USE_WANG_VAL_AS_TRAIN}")
+print(f"[build_data] USE_WANG_TEST_AS_TRAIN = {USE_WANG_TEST_AS_TRAIN}")
+print(f"[build_data] USE_WANG_CNN_SYNTH_TEST_AS_TRAIN = {USE_WANG_CNN_SYNTH_TEST_AS_TRAIN}")
 print(f"[build_data] USE_CORVI_TRAIN = {USE_CORVI_TRAIN}")
 print(f"[build_data] USE_DMIMAGEDETECT_TRAIN = {USE_DMIMAGEDETECT_TRAIN}")
 print(f"[build_data] USE_REALRAISE_TRAIN = {USE_REALRAISE_TRAIN}")
-print(f"[build_data] USE_WANG_VAL_AS_TRAIN = {USE_WANG_VAL_AS_TRAIN}")
-print(f"[build_data] USE_WANG_TEST_AS_TRAIN = {USE_WANG_TEST_AS_TRAIN}")
 print(f"[build_data] EVALUATION_DATASET_KEY = {EVALUATION_DATASET_KEY}")
 print(f"[build_data] MAX_TRAIN_IMAGES = {MAX_TRAIN_IMAGES}")
 print(f"[build_data] MAX_EVAL_REAL = {MAX_EVAL_REAL}")
@@ -865,7 +883,8 @@ print(f"[build_data] MAX_EVAL_SYNTHETIC = {MAX_EVAL_SYNTHETIC}")
 
 train_dfs = []
 
-# Add Wang TRAIN split only for constrained training.
+# Add Wang TRAIN split only if available.
+# In our uploaded Wang dataset, train/train does not exist, so this is normally False.
 if USE_WANG_TRAIN:
     print("\n[build_data] Loading Wang TRAIN split...")
     wang_train_df = scan_wang_split(
@@ -879,7 +898,8 @@ if USE_WANG_TRAIN:
 else:
     print("\n[build_data] Skipping Wang TRAIN split because USE_WANG_TRAIN=False")
 
-# Add Wang VAL split only if explicitly selected for open-run training.
+# Add Wang VAL split as training data.
+# This gives both real and synthetic images.
 if USE_WANG_VAL_AS_TRAIN:
     print("\n[build_data] Loading Wang VAL split...")
     wang_val_df = scan_wang_split(
@@ -893,7 +913,7 @@ if USE_WANG_VAL_AS_TRAIN:
 else:
     print("\n[build_data] Skipping Wang VAL split because USE_WANG_VAL_AS_TRAIN=False")
 
-# Add Wang TEST split only if explicitly selected for open-run training.
+# Add Wang TEST split only if explicitly selected.
 if USE_WANG_TEST_AS_TRAIN:
     print("\n[build_data] Loading Wang TEST split...")
     wang_test_df = scan_wang_split(
@@ -906,6 +926,21 @@ if USE_WANG_TEST_AS_TRAIN:
     train_dfs.append(wang_test_df)
 else:
     print("\n[build_data] Skipping Wang TEST split because USE_WANG_TEST_AS_TRAIN=False")
+
+# Add Wang CNN synth test split only if explicitly selected.
+# Folder structure is cnn_synth_test/cnn_synth_test.
+if USE_WANG_CNN_SYNTH_TEST_AS_TRAIN:
+    print("\n[build_data] Loading Wang CNN_SYNTH_TEST split...")
+    wang_cnn_synth_df = scan_wang_split(
+        dataset_key="wang_cnndetection",
+        dataset_path=DATASET_PATHS["wang_cnndetection"],
+        split_name="cnn_synth_test",
+        max_images=MAX_TRAIN_IMAGES
+    )
+    print(f"[build_data] Wang CNN_SYNTH_TEST loaded rows: {len(wang_cnn_synth_df):,}")
+    train_dfs.append(wang_cnn_synth_df)
+else:
+    print("\n[build_data] Skipping Wang CNN_SYNTH_TEST because USE_WANG_CNN_SYNTH_TEST_AS_TRAIN=False")
 
 # Add Corvi synthetic training data.
 if USE_CORVI_TRAIN:
@@ -990,7 +1025,7 @@ print("[build_data] DONE building training and evaluation dataframes")
 print("#" * 80)
 
 
-# In[28]:
+# In[ ]:
 
 
 # ============================================================
@@ -1015,7 +1050,7 @@ else:
     print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
 
 
-# In[29]:
+# In[ ]:
 
 
 # Quick check to see what Kaggle paths actually exist
@@ -1023,7 +1058,7 @@ for item in Path("/kaggle/input").iterdir():
     print(item)
 
 
-# In[30]:
+# In[ ]:
 
 
 # ============================================================
@@ -1053,7 +1088,7 @@ print("\nEvaluation dataframe preview:")
 display(eval_df.head())
 
 
-# In[31]:
+# In[ ]:
 
 
 # ============================================================
@@ -1272,11 +1307,12 @@ def save_config_json(config_path):
         "threshold": THRESHOLD,
 
         "use_wang_train": USE_WANG_TRAIN,
+        "use_wang_val_as_train": USE_WANG_VAL_AS_TRAIN,
+        "use_wang_test_as_train": USE_WANG_TEST_AS_TRAIN,
+        "use_wang_cnn_synth_test_as_train": USE_WANG_CNN_SYNTH_TEST_AS_TRAIN,
         "use_corvi_train": USE_CORVI_TRAIN,
         "use_dmimagedetect_train": USE_DMIMAGEDETECT_TRAIN,
         "use_realraise_train": USE_REALRAISE_TRAIN,
-        "use_wang_val_as_train": USE_WANG_VAL_AS_TRAIN,
-        "use_wang_test_as_train": USE_WANG_TEST_AS_TRAIN,
         "evaluation_dataset_key": EVALUATION_DATASET_KEY,
 
         "max_train_images": MAX_TRAIN_IMAGES,
@@ -1419,6 +1455,13 @@ def append_summary_row(summary_path, metrics, best_epoch=None, best_val_loss=Non
 
         "train_datasets_used": train_datasets_used,
         "evaluation_dataset": EVALUATION_DATASET_KEY,
+        "use_wang_train": USE_WANG_TRAIN,
+        "use_wang_val_as_train": USE_WANG_VAL_AS_TRAIN,
+        "use_wang_test_as_train": USE_WANG_TEST_AS_TRAIN,
+        "use_wang_cnn_synth_test_as_train": USE_WANG_CNN_SYNTH_TEST_AS_TRAIN,
+        "use_corvi_train": USE_CORVI_TRAIN,
+        "use_dmimagedetect_train": USE_DMIMAGEDETECT_TRAIN,
+        "use_realraise_train": USE_REALRAISE_TRAIN,
         "num_train_images": len(train_df),
         "num_eval_images": len(eval_df),
         "real_train_count": train_real_count,
