@@ -1,0 +1,63 @@
+DMImageDetect-ClipDetWeights
+
+DMImageDetect-ClipDetWeights
+
+Code
+
+Download
+About Dataset
+No description available
+
+Usability
+2.50
+
+License
+Unknown
+
+
+Expected update frequency
+Not specified
+
+Tags
+
+Data Explorer
+Version 1 (282.56 MB)
+
+weights
+
+Corvi2023
+
+config.yaml
+
+weights.pth
+
+clipdet_latent10k
+
+.ipynb_checkpoints
+
+config-checkpoint.yaml
+
+config.yaml
+
+weights.pth
+
+clipdet_latent10k_plus
+
+.ipynb_checkpoints
+
+config-checkpoint.yaml
+
+config.yaml
+
+weights.pth
+
+Summary
+8 files
+
+.pth
+
+3
+
+.yaml
+
+5
