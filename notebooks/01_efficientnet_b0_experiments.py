@@ -31,7 +31,7 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
-# In[ ]:
+# In[19]:
 
 
 # Install common packages needed for EfficientNet-B0 training and experiment logging
@@ -41,7 +41,7 @@ get_ipython().system('pip install numpy pandas scikit-learn matplotlib pillow tq
 
 # # Imports
 
-# In[ ]:
+# In[20]:
 
 
 # ============================================================
@@ -94,7 +94,7 @@ from torchvision.models import EfficientNet_B0_Weights
 print("EfficientNet-specific imports completed.")
 
 
-# In[ ]:
+# In[21]:
 
 
 # ============================================================
@@ -141,7 +141,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[ ]:
+# In[22]:
 
 
 # ============================================================
@@ -209,7 +209,7 @@ print(f"USE_AMP: {USE_AMP}")
 print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 
 
-# In[ ]:
+# In[23]:
 
 
 # ============================================================
@@ -267,7 +267,7 @@ print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
 print(f"Fixed eval real/synthetic: {MAX_EVAL_REAL}/{MAX_EVAL_SYNTHETIC}")
 
 
-# In[ ]:
+# In[24]:
 
 
 # ============================================================
@@ -314,7 +314,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[ ]:
+# In[25]:
 
 
 # ============================================================
@@ -350,7 +350,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[ ]:
+# In[26]:
 
 
 # ============================================================
@@ -393,12 +393,6 @@ SYNTHETIC_KEYWORDS = [
 def is_image_file(path):
     """
     Check whether a file path has an image extension.
-
-    Parameters:
-        path (Path): File path.
-
-    Returns:
-        bool: True if the file looks like an image file.
     """
     return path.suffix.lower() in IMAGE_EXTENSIONS
 
@@ -410,15 +404,6 @@ def infer_label_from_path(path):
     Label convention:
         0 = real
         1 = synthetic
-
-    This function uses folder names and file paths.
-    If the label cannot be guessed, it returns None.
-
-    Parameters:
-        path (Path): Image path.
-
-    Returns:
-        int or None: 0 for real, 1 for synthetic, None if unknown.
     """
     path_text = str(path).lower()
 
@@ -438,12 +423,6 @@ def infer_generator_from_path(path):
     """
     Try to infer the generator/source type from the image path.
     This is useful for later error analysis.
-
-    Parameters:
-        path (Path): Image path.
-
-    Returns:
-        str: Generator/source name if guessed, otherwise "unknown".
     """
     path_text = str(path).lower()
 
@@ -464,34 +443,67 @@ def scan_dataset(dataset_key, dataset_path, max_images=None):
     """
     Scan one dataset folder and return a dataframe with image paths and labels.
 
-    Parameters:
-        dataset_key (str): Short name of the dataset.
-        dataset_path (Path): Path to the dataset folder.
-        max_images (int or None): Optional image limit for quick debugging.
-
-    Returns:
-        pd.DataFrame: Dataframe with filepath, label, dataset, generator, and image name.
+    This version prints progress while scanning so Kaggle does not look stuck.
     """
+    print("\n" + "=" * 70)
+    print(f"[scan_dataset] START dataset_key = {dataset_key}")
+    print(f"[scan_dataset] Path = {dataset_path}")
+    print(f"[scan_dataset] max_images = {max_images}")
+    print("=" * 70)
+
     rows = []
 
     if not dataset_path.exists():
-        print(f"[SKIP] Dataset path does not exist: {dataset_path}")
+        print(f"[scan_dataset] SKIP: Dataset path does not exist: {dataset_path}")
         return pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
 
-    image_paths = [p for p in dataset_path.rglob("*") if p.is_file() and is_image_file(p)]
+    print("[scan_dataset] Path exists. Starting recursive file scan...")
 
-    # Shuffle before limiting so MAX_TRAIN_IMAGES does not only take one folder/class first
+    image_paths = []
+    scanned_items = 0
+
+    # Loop instead of list comprehension so progress is visible.
+    for p in dataset_path.rglob("*"):
+        scanned_items += 1
+
+        if scanned_items % 50000 == 0:
+            print(
+                f"[scan_dataset] Still scanning {dataset_key}... "
+                f"items seen={scanned_items:,}, image files found={len(image_paths):,}"
+            )
+
+        if p.is_file() and is_image_file(p):
+            image_paths.append(p)
+
+    print(f"[scan_dataset] Finished recursive scan for {dataset_key}.")
+    print(f"[scan_dataset] Total filesystem items seen: {scanned_items:,}")
+    print(f"[scan_dataset] Total image files found before shuffle/limit: {len(image_paths):,}")
+
+    # Shuffle before limiting so MAX_TRAIN_IMAGES does not only take one folder/class first.
+    print(f"[scan_dataset] Shuffling image paths for {dataset_key}...")
     random.Random(SEED).shuffle(image_paths)
 
     if max_images is not None:
+        print(f"[scan_dataset] Applying max_images limit: {max_images}")
         image_paths = image_paths[:max_images]
 
-    for img_path in image_paths:
+    print(f"[scan_dataset] Images to label/process after limit: {len(image_paths):,}")
+    print(f"[scan_dataset] Starting label inference for {dataset_key}...")
+
+    skipped_unknown = 0
+
+    for idx, img_path in enumerate(image_paths, start=1):
+        if idx % 5000 == 0:
+            print(
+                f"[scan_dataset] Labeling progress for {dataset_key}: "
+                f"{idx:,}/{len(image_paths):,}, rows kept={len(rows):,}, skipped={skipped_unknown:,}"
+            )
+
         label = infer_label_from_path(img_path)
 
-        # If label cannot be inferred, we skip for training/evaluation.
-        # For test inference later, we can allow label=None separately.
+        # If label cannot be inferred, skip it.
         if label is None:
+            skipped_unknown += 1
             continue
 
         rows.append({
@@ -504,11 +516,12 @@ def scan_dataset(dataset_key, dataset_path, max_images=None):
 
     df = pd.DataFrame(rows)
 
-    print(f"[SCAN] {dataset_key}")
-    print(f"  Path: {dataset_path}")
-    print(f"  Images found with labels: {len(df)}")
+    print(f"[scan_dataset] DONE dataset_key = {dataset_key}")
+    print(f"[scan_dataset] Images kept with labels: {len(df):,}")
+    print(f"[scan_dataset] Skipped unknown-label images: {skipped_unknown:,}")
 
     if len(df) > 0:
+        print("[scan_dataset] Label counts:")
         print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
 
     return df
@@ -518,7 +531,7 @@ def scan_wang_split(dataset_key, dataset_path, split_name, max_images=None):
     """
     Load only one split from the Wang CNNDetection dataset.
 
-    Wang dataset structure is like:
+    Wang dataset structure:
         train/train/class_name/0_real
         train/train/class_name/1_fake
         val/val/class_name/0_real
@@ -530,28 +543,60 @@ def scan_wang_split(dataset_key, dataset_path, split_name, max_images=None):
         0 = real
         1 = synthetic
     """
+    print("\n" + "=" * 70)
+    print(f"[wang_split] START dataset_key = {dataset_key}, split = {split_name}")
+    print(f"[wang_split] Base path = {dataset_path}")
+    print(f"[wang_split] max_images = {max_images}")
+    print("=" * 70)
 
     # Wang has repeated folder names, for example val/val and test/test.
     split_path = dataset_path / split_name / split_name
+    print(f"[wang_split] Expected split path = {split_path}")
 
     if not split_path.exists():
-        print(f"[SKIP] Wang split path not found: {split_path}")
+        print(f"[wang_split] SKIP: Wang split path not found: {split_path}")
         return pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
 
-    image_paths = [
-        p for p in split_path.rglob("*")
-        if p.is_file() and is_image_file(p)
-    ]
+    print("[wang_split] Split path exists. Starting recursive file scan...")
 
-    # Shuffle before limiting so we do not accidentally take only one object category first.
+    image_paths = []
+    scanned_items = 0
+
+    for p in split_path.rglob("*"):
+        scanned_items += 1
+
+        if scanned_items % 50000 == 0:
+            print(
+                f"[wang_split] Still scanning split={split_name}... "
+                f"items seen={scanned_items:,}, image files found={len(image_paths):,}"
+            )
+
+        if p.is_file() and is_image_file(p):
+            image_paths.append(p)
+
+    print(f"[wang_split] Finished recursive scan for split={split_name}.")
+    print(f"[wang_split] Total filesystem items seen: {scanned_items:,}")
+    print(f"[wang_split] Total image files found before shuffle/limit: {len(image_paths):,}")
+
+    print(f"[wang_split] Shuffling image paths for split={split_name}...")
     random.Random(SEED).shuffle(image_paths)
 
     if max_images is not None:
+        print(f"[wang_split] Applying max_images limit: {max_images}")
         image_paths = image_paths[:max_images]
 
-    rows = []
+    print(f"[wang_split] Images to label/process after limit: {len(image_paths):,}")
 
-    for image_path in image_paths:
+    rows = []
+    skipped_unknown = 0
+
+    for idx, image_path in enumerate(image_paths, start=1):
+        if idx % 5000 == 0:
+            print(
+                f"[wang_split] Labeling progress split={split_name}: "
+                f"{idx:,}/{len(image_paths):,}, rows kept={len(rows):,}, skipped={skipped_unknown:,}"
+            )
+
         path_text = str(image_path).lower()
 
         if "0_real" in path_text:
@@ -561,7 +606,7 @@ def scan_wang_split(dataset_key, dataset_path, split_name, max_images=None):
             label = 1
             generator = "wang_fake"
         else:
-            # Skip anything that is not clearly real/fake.
+            skipped_unknown += 1
             continue
 
         rows.append({
@@ -574,11 +619,12 @@ def scan_wang_split(dataset_key, dataset_path, split_name, max_images=None):
 
     df = pd.DataFrame(rows)
 
-    print(f"[WANG SPLIT LOAD] {dataset_key} | split = {split_name}")
-    print(f"  Split path: {split_path}")
-    print(f"  Images loaded: {len(df)}")
+    print(f"[wang_split] DONE split = {split_name}")
+    print(f"[wang_split] Images kept with labels: {len(df):,}")
+    print(f"[wang_split] Skipped unknown-label images: {skipped_unknown:,}")
 
     if len(df) > 0:
+        print("[wang_split] Label counts:")
         print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
 
     return df
@@ -587,28 +633,26 @@ def scan_wang_split(dataset_key, dataset_path, split_name, max_images=None):
 def print_dataset_summary(df, name):
     """
     Print a clean summary for a dataset dataframe.
-
-    Parameters:
-        df (pd.DataFrame): Dataset dataframe.
-        name (str): Display name.
     """
-    print("\n" + "=" * 60)
-    print(f"DATASET SUMMARY: {name}")
-    print("=" * 60)
+    print("\n" + "=" * 70)
+    print(f"[summary] DATASET SUMMARY: {name}")
+    print("=" * 70)
 
     if df is None or len(df) == 0:
-        print("No images found.")
+        print("[summary] No images found.")
         return
 
-    print(f"Total images: {len(df)}")
-    print("\nLabel counts:")
+    print(f"[summary] Total images: {len(df):,}")
+
+    print("\n[summary] Label counts:")
     print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
 
-    print("\nSource dataset counts:")
+    print("\n[summary] Source dataset counts:")
     print(df["source_dataset"].value_counts())
 
-    print("\nGenerator/source counts:")
+    print("\n[summary] Generator/source counts:")
     print(df["generator"].value_counts().head(20))
+
 
 def load_dmimagedetect_fake_from_csv(dataset_key, dataset_path, max_images=None):
     """
@@ -617,27 +661,43 @@ def load_dmimagedetect_fake_from_csv(dataset_key, dataset_path, max_images=None)
     In list_train.csv:
         filename0 = real COCO image, but these files are missing in our Kaggle input.
         filename1 = synthetic image, available inside coco_latent_t2i.
-
-    So for training, we safely load filename1 only.
     """
+    print("\n" + "=" * 70)
+    print(f"[dm_train_csv] START dataset_key = {dataset_key}")
+    print(f"[dm_train_csv] Dataset path = {dataset_path}")
+    print(f"[dm_train_csv] max_images = {max_images}")
+    print("=" * 70)
 
     csv_path = dataset_path / "train_set" / "list_train.csv"
+    print(f"[dm_train_csv] CSV path = {csv_path}")
 
     if not csv_path.exists():
-        print(f"[SKIP] CSV not found: {csv_path}")
+        print(f"[dm_train_csv] SKIP: CSV not found: {csv_path}")
         return pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
 
+    print("[dm_train_csv] Reading CSV...")
     df_csv = pd.read_csv(csv_path)
+    print(f"[dm_train_csv] CSV rows loaded: {len(df_csv):,}")
 
-    # Shuffle rows before limiting.
+    print("[dm_train_csv] Shuffling CSV rows...")
     df_csv = df_csv.sample(frac=1, random_state=SEED).reset_index(drop=True)
 
     if max_images is not None:
+        print(f"[dm_train_csv] Applying max_images limit: {max_images}")
         df_csv = df_csv.head(max_images)
 
     rows = []
+    missing_files = 0
 
-    for _, row in df_csv.iterrows():
+    print("[dm_train_csv] Checking fake image paths from filename1...")
+
+    for idx, row in df_csv.iterrows():
+        if (idx + 1) % 2000 == 0:
+            print(
+                f"[dm_train_csv] Progress: {idx + 1:,}/{len(df_csv):,}, "
+                f"rows kept={len(rows):,}, missing files={missing_files:,}"
+            )
+
         fake_path = dataset_path / "train_set" / row["filename1"]
 
         if fake_path.exists():
@@ -648,17 +708,21 @@ def load_dmimagedetect_fake_from_csv(dataset_key, dataset_path, max_images=None)
                 "source_dataset": dataset_key,
                 "generator": "coco_latent_t2i"
             })
+        else:
+            missing_files += 1
 
     df = pd.DataFrame(rows)
 
-    print(f"[DMIMAGEDETECT FAKE CSV LOAD] {dataset_key}")
-    print(f"  CSV path: {csv_path}")
-    print(f"  Synthetic images loaded: {len(df)}")
+    print(f"[dm_train_csv] DONE dataset_key = {dataset_key}")
+    print(f"[dm_train_csv] Synthetic images loaded: {len(df):,}")
+    print(f"[dm_train_csv] Missing fake files: {missing_files:,}")
 
     if len(df) > 0:
+        print("[dm_train_csv] Label counts:")
         print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
 
     return df
+
 
 def infer_dmimagedetect_test_label(path):
     """
@@ -673,12 +737,10 @@ def infer_dmimagedetect_test_label(path):
     """
     parts = [part.lower() for part in path.parts]
 
-    # If any folder starts with real_, it is a real image.
     for part in parts:
         if part.startswith("real_"):
             return 0
 
-    # All other folders in DMImageDetect-Test are synthetic generator folders.
     return 1
 
 
@@ -686,30 +748,48 @@ def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, m
     """
     Load a balanced fixed evaluation set from DMImageDetect-Test.
 
-    This keeps the eval set the same for all models:
-        - max_real real images
-        - max_synthetic synthetic images
-
-    The function shuffles with SEED so every model notebook gets the same fixed subset.
+    This version prints progress while scanning so Kaggle does not look stuck.
     """
+    print("\n" + "=" * 70)
+    print(f"[dm_test_eval] START dataset_key = {dataset_key}")
+    print(f"[dm_test_eval] Dataset path = {dataset_path}")
+    print(f"[dm_test_eval] Target real = {max_real:,}")
+    print(f"[dm_test_eval] Target synthetic = {max_synthetic:,}")
+    print("=" * 70)
+
     test_path = dataset_path / "test_set"
+    print(f"[dm_test_eval] Expected test path = {test_path}")
 
     if not test_path.exists():
-        print(f"[SKIP] DMImageDetect test path not found: {test_path}")
+        print(f"[dm_test_eval] SKIP: DMImageDetect test path not found: {test_path}")
         return pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
 
     real_rows = []
     synthetic_rows = []
 
-    image_paths = [
-        p for p in test_path.rglob("*")
-        if p.is_file() and is_image_file(p)
-    ]
+    print("[dm_test_eval] Starting recursive scan and collecting balanced eval images...")
 
-    # Shuffle once so the fixed subset is not folder-order biased.
-    random.Random(SEED).shuffle(image_paths)
+    scanned_items = 0
+    image_files_seen = 0
 
-    for image_path in image_paths:
+    # Important: collect rows during scanning so we can stop early
+    # when enough real and synthetic samples are found.
+    for image_path in test_path.rglob("*"):
+        scanned_items += 1
+
+        if scanned_items % 50000 == 0:
+            print(
+                f"[dm_test_eval] Still scanning... items seen={scanned_items:,}, "
+                f"image files seen={image_files_seen:,}, "
+                f"real kept={len(real_rows):,}/{max_real:,}, "
+                f"synthetic kept={len(synthetic_rows):,}/{max_synthetic:,}"
+            )
+
+        if not image_path.is_file() or not is_image_file(image_path):
+            continue
+
+        image_files_seen += 1
+
         label = infer_dmimagedetect_test_label(image_path)
 
         row = {
@@ -726,30 +806,39 @@ def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, m
         elif label == 1 and len(synthetic_rows) < max_synthetic:
             synthetic_rows.append(row)
 
-        # Stop once both classes reached the target.
+        # Stop early once both classes reached target.
         if len(real_rows) >= max_real and len(synthetic_rows) >= max_synthetic:
+            print("[dm_test_eval] Target reached for both classes. Stopping scan early.")
             break
+
+    print("[dm_test_eval] Finished scan.")
+    print(f"[dm_test_eval] Total filesystem items seen: {scanned_items:,}")
+    print(f"[dm_test_eval] Total image files seen: {image_files_seen:,}")
+    print(f"[dm_test_eval] Real kept: {len(real_rows):,}")
+    print(f"[dm_test_eval] Synthetic kept: {len(synthetic_rows):,}")
 
     df = pd.DataFrame(real_rows + synthetic_rows)
 
-    # Shuffle final eval rows so all real/fake are mixed.
-    df = df.sample(frac=1, random_state=SEED).reset_index(drop=True)
+    if len(df) > 0:
+        print("[dm_test_eval] Shuffling final eval dataframe...")
+        df = df.sample(frac=1, random_state=SEED).reset_index(drop=True)
 
-    print(f"[DMIMAGEDETECT TEST BALANCED LOAD] {dataset_key}")
-    print(f"  Test path: {test_path}")
-    print(f"  Real loaded: {len(real_rows)}")
-    print(f"  Synthetic loaded: {len(synthetic_rows)}")
-    print(f"  Total loaded: {len(df)}")
+    print(f"[dm_test_eval] DONE dataset_key = {dataset_key}")
+    print(f"[dm_test_eval] Total eval images loaded: {len(df):,}")
 
     if len(df) > 0:
+        print("[dm_test_eval] Label counts:")
         print(df["label"].value_counts().rename(index={0: "real", 1: "synthetic"}))
+
+        print("[dm_test_eval] Top generators:")
+        print(df["generator"].value_counts().head(20))
 
     return df
 
 
 # ## load dataset
 
-# In[ ]:
+# In[27]:
 
 
 # ============================================================
@@ -758,83 +847,127 @@ def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, m
 # Training data is selectable.
 # Evaluation data is fixed for all models.
 
+print("\n" + "#" * 80)
+print("[build_data] START building training and evaluation dataframes")
+print("#" * 80)
+
+print("[build_data] Current dataset switches:")
+print(f"[build_data] USE_WANG_TRAIN = {USE_WANG_TRAIN}")
+print(f"[build_data] USE_CORVI_TRAIN = {USE_CORVI_TRAIN}")
+print(f"[build_data] USE_DMIMAGEDETECT_TRAIN = {USE_DMIMAGEDETECT_TRAIN}")
+print(f"[build_data] USE_REALRAISE_TRAIN = {USE_REALRAISE_TRAIN}")
+print(f"[build_data] USE_WANG_VAL_AS_TRAIN = {USE_WANG_VAL_AS_TRAIN}")
+print(f"[build_data] USE_WANG_TEST_AS_TRAIN = {USE_WANG_TEST_AS_TRAIN}")
+print(f"[build_data] EVALUATION_DATASET_KEY = {EVALUATION_DATASET_KEY}")
+print(f"[build_data] MAX_TRAIN_IMAGES = {MAX_TRAIN_IMAGES}")
+print(f"[build_data] MAX_EVAL_REAL = {MAX_EVAL_REAL}")
+print(f"[build_data] MAX_EVAL_SYNTHETIC = {MAX_EVAL_SYNTHETIC}")
+
 train_dfs = []
 
 # Add Wang TRAIN split only for constrained training.
 if USE_WANG_TRAIN:
-    train_dfs.append(
-        scan_wang_split(
-            dataset_key="wang_cnndetection",
-            dataset_path=DATASET_PATHS["wang_cnndetection"],
-            split_name="train",
-            max_images=MAX_TRAIN_IMAGES
-        )
+    print("\n[build_data] Loading Wang TRAIN split...")
+    wang_train_df = scan_wang_split(
+        dataset_key="wang_cnndetection",
+        dataset_path=DATASET_PATHS["wang_cnndetection"],
+        split_name="train",
+        max_images=MAX_TRAIN_IMAGES
     )
+    print(f"[build_data] Wang TRAIN loaded rows: {len(wang_train_df):,}")
+    train_dfs.append(wang_train_df)
+else:
+    print("\n[build_data] Skipping Wang TRAIN split because USE_WANG_TRAIN=False")
 
 # Add Wang VAL split only if explicitly selected for open-run training.
 if USE_WANG_VAL_AS_TRAIN:
-    train_dfs.append(
-        scan_wang_split(
-            dataset_key="wang_cnndetection",
-            dataset_path=DATASET_PATHS["wang_cnndetection"],
-            split_name="val",
-            max_images=MAX_TRAIN_IMAGES
-        )
+    print("\n[build_data] Loading Wang VAL split...")
+    wang_val_df = scan_wang_split(
+        dataset_key="wang_cnndetection",
+        dataset_path=DATASET_PATHS["wang_cnndetection"],
+        split_name="val",
+        max_images=MAX_TRAIN_IMAGES
     )
+    print(f"[build_data] Wang VAL loaded rows: {len(wang_val_df):,}")
+    train_dfs.append(wang_val_df)
+else:
+    print("\n[build_data] Skipping Wang VAL split because USE_WANG_VAL_AS_TRAIN=False")
 
 # Add Wang TEST split only if explicitly selected for open-run training.
 if USE_WANG_TEST_AS_TRAIN:
-    train_dfs.append(
-        scan_wang_split(
-            dataset_key="wang_cnndetection",
-            dataset_path=DATASET_PATHS["wang_cnndetection"],
-            split_name="test",
-            max_images=MAX_TRAIN_IMAGES
-        )
+    print("\n[build_data] Loading Wang TEST split...")
+    wang_test_df = scan_wang_split(
+        dataset_key="wang_cnndetection",
+        dataset_path=DATASET_PATHS["wang_cnndetection"],
+        split_name="test",
+        max_images=MAX_TRAIN_IMAGES
     )
+    print(f"[build_data] Wang TEST loaded rows: {len(wang_test_df):,}")
+    train_dfs.append(wang_test_df)
+else:
+    print("\n[build_data] Skipping Wang TEST split because USE_WANG_TEST_AS_TRAIN=False")
 
 # Add Corvi synthetic training data.
 if USE_CORVI_TRAIN:
-    train_dfs.append(
-        scan_dataset(
-            dataset_key="corvi_latent_diffusion",
-            dataset_path=DATASET_PATHS["corvi_latent_diffusion"],
-            max_images=MAX_TRAIN_IMAGES
-        )
+    print("\n[build_data] Loading Corvi latent diffusion training data...")
+    corvi_df = scan_dataset(
+        dataset_key="corvi_latent_diffusion",
+        dataset_path=DATASET_PATHS["corvi_latent_diffusion"],
+        max_images=MAX_TRAIN_IMAGES
     )
+    print(f"[build_data] Corvi loaded rows: {len(corvi_df):,}")
+    train_dfs.append(corvi_df)
+else:
+    print("\n[build_data] Skipping Corvi because USE_CORVI_TRAIN=False")
 
 # Add only available synthetic DMImageDetect train images.
-# This is open-run extra data, not constrained.
 if USE_DMIMAGEDETECT_TRAIN:
-    train_dfs.append(
-        load_dmimagedetect_fake_from_csv(
-            dataset_key="dmimagedetect_train_fake_only",
-            dataset_path=DATASET_PATHS["dmimagedetect_train"],
-            max_images=MAX_TRAIN_IMAGES
-        )
+    print("\n[build_data] Loading DMImageDetect train fake-only data...")
+    dm_train_df = load_dmimagedetect_fake_from_csv(
+        dataset_key="dmimagedetect_train_fake_only",
+        dataset_path=DATASET_PATHS["dmimagedetect_train"],
+        max_images=MAX_TRAIN_IMAGES
     )
+    print(f"[build_data] DMImageDetect train fake-only loaded rows: {len(dm_train_df):,}")
+    train_dfs.append(dm_train_df)
+else:
+    print("\n[build_data] Skipping DMImageDetect train because USE_DMIMAGEDETECT_TRAIN=False")
 
 # Add RealRAISE real images.
-# This is open-run extra data, useful to balance fake-heavy training.
 if USE_REALRAISE_TRAIN:
-    train_dfs.append(
-        scan_dataset(
-            dataset_key="dmimagedetect_realraise",
-            dataset_path=DATASET_PATHS["dmimagedetect_realraise"],
-            max_images=MAX_TRAIN_IMAGES
-        )
+    print("\n[build_data] Loading RealRAISE real training data...")
+    realraise_df = scan_dataset(
+        dataset_key="dmimagedetect_realraise",
+        dataset_path=DATASET_PATHS["dmimagedetect_realraise"],
+        max_images=MAX_TRAIN_IMAGES
     )
+    print(f"[build_data] RealRAISE loaded rows: {len(realraise_df):,}")
+    train_dfs.append(realraise_df)
+else:
+    print("\n[build_data] Skipping RealRAISE because USE_REALRAISE_TRAIN=False")
 
 # Combine selected training datasets.
+print("\n[build_data] Combining selected training dataframes...")
+
 if len(train_dfs) > 0:
     train_df = pd.concat(train_dfs, ignore_index=True)
+    print(f"[build_data] Combined train rows before duplicate removal: {len(train_df):,}")
 else:
+    print("[build_data] No training datasets selected. Creating empty train dataframe.")
     train_df = pd.DataFrame(columns=["filepath", "image_name", "label", "source_dataset", "generator"])
 
 # Remove duplicate training filepaths.
+print("[build_data] Removing duplicate training filepaths...")
+before_dedup = len(train_df)
 train_df = train_df.drop_duplicates(subset=["filepath"]).reset_index(drop=True)
+after_dedup = len(train_df)
+
+print(f"[build_data] Train rows before dedup: {before_dedup:,}")
+print(f"[build_data] Train rows after dedup:  {after_dedup:,}")
+print(f"[build_data] Duplicate train rows removed: {before_dedup - after_dedup:,}")
 
 # Build fixed balanced evaluation dataframe from DMImageDetect-Test.
+print("\n[build_data] Loading fixed balanced evaluation data from DMImageDetect-Test...")
 eval_df = scan_dmimagedetect_test_balanced(
     dataset_key=EVALUATION_DATASET_KEY,
     dataset_path=DATASET_PATHS[EVALUATION_DATASET_KEY],
@@ -842,13 +975,22 @@ eval_df = scan_dmimagedetect_test_balanced(
     max_synthetic=MAX_EVAL_SYNTHETIC
 )
 
+print(f"[build_data] Eval rows before duplicate removal: {len(eval_df):,}")
+
 eval_df = eval_df.drop_duplicates(subset=["filepath"]).reset_index(drop=True)
 
+print(f"[build_data] Eval rows after duplicate removal: {len(eval_df):,}")
+
+print("\n[build_data] Printing final dataset summaries...")
 print_dataset_summary(train_df, "TRAINING DATA")
 print_dataset_summary(eval_df, "FIXED EVALUATION DATA")
 
+print("\n" + "#" * 80)
+print("[build_data] DONE building training and evaluation dataframes")
+print("#" * 80)
 
-# In[ ]:
+
+# In[28]:
 
 
 # ============================================================
@@ -873,7 +1015,7 @@ else:
     print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
 
 
-# In[ ]:
+# In[29]:
 
 
 # Quick check to see what Kaggle paths actually exist
@@ -881,7 +1023,7 @@ for item in Path("/kaggle/input").iterdir():
     print(item)
 
 
-# In[ ]:
+# In[30]:
 
 
 # ============================================================
@@ -911,7 +1053,7 @@ print("\nEvaluation dataframe preview:")
 display(eval_df.head())
 
 
-# In[ ]:
+# In[31]:
 
 
 # ============================================================
