@@ -1,7 +1,23 @@
 Task A Experiment Analysis Report
 ==================================================
 
-Generated at: 2026-05-12 22:50:41
-Total experiments analyzed: 0
+Generated at: 2026-05-14 18:03:42
+Total experiments analyzed: 3
 Primary ranking metric: f1
 
+Best Overall Experiment
+--------------------------------------------------
+Experiment ID: 20260514_105614_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic
+Model: 01_efficientnet_b0
+Model folder: 01_efficientnet_b0
+Runner: zuha
+F1: 0.740302744
+Accuracy: 0.7255
+ROC AUC: 0.7917095
+Average Precision: 0.797840598
+Threshold: 0.65
+Notes: EfficientNet-B0 baseline with basic augmentation
+
+Best Experiment Per Model
+--------------------------------------------------
+01_efficientnet_b0 | F1=0.740302744 | Acc=0.7255 | AUC=0.7917095 | Experiment=20260514_105614_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic
