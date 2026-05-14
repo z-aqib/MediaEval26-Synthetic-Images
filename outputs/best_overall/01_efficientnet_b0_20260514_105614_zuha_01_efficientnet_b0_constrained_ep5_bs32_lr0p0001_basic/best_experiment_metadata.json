@@ -1,7 +1,7 @@
 {
-    "selected_at": "2026-05-14 21:16:47",
+    "selected_at": "2026-05-15 02:42:07",
     "selection_metric": "f1",
-    "git_commit_hash": "7f56826757521894fcbc08d20eaded803a21fb71",
+    "git_commit_hash": "0571ee68d70b340580ffacf7ef8f395bb87861b3",
     "best_experiment_row": {
         "experiment_id": "20260514_105614_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic",
         "timestamp": "20260514_105614",
@@ -49,7 +49,7 @@
         "fp": 1326,
         "fn": 870,
         "tp": 3130,
-        "notes": "EfficientNet-B0 baseline with basic augmentation + added wang cnn synth test as train",
+        "notes": "Experiment #2 = EfficientNet-B0 baseline with basic augmentation + added wang cnn synth test as train",
         "summary_csv_path": "d:\\Users\\DELL\\new-onedrive\\OneDrive - Institute of Business Administration\\IBA\\sem8\\genai\\competition\\outputs\\01_efficientnet_b0\\01_efficientnet_b0_summary.csv",
         "model_folder": "01_efficientnet_b0",
         "rank": 1

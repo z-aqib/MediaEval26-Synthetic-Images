@@ -1,8 +1,8 @@
 Task A Experiment Analysis Report
 ==================================================
 
-Generated at: 2026-05-14 21:16:47
-Total experiments analyzed: 5
+Generated at: 2026-05-15 02:42:08
+Total experiments analyzed: 11
 Primary ranking metric: f1
 
 Best Overall Experiment
@@ -16,8 +16,9 @@ Accuracy: 0.7255
 ROC AUC: 0.7917095
 Average Precision: 0.797840598
 Threshold: 0.65
-Notes: EfficientNet-B0 baseline with basic augmentation + added wang cnn synth test as train
+Notes: Experiment #2 = EfficientNet-B0 baseline with basic augmentation + added wang cnn synth test as train
 
 Best Experiment Per Model
 --------------------------------------------------
 01_efficientnet_b0 | F1=0.740302744 | Acc=0.7255 | AUC=0.7917095 | Experiment=20260514_105614_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic
+02_convnext_tiny | F1=0.7097915847424302 | Acc=0.631 | AUC=0.7654151250000001 | Experiment=20260514_185439_fatima_02_convnext_tiny_constrained_ep5_bs24_lr0p0001_basic
