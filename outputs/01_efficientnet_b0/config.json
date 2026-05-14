@@ -1,12 +1,12 @@
 {
-    "experiment_id": "20260514_143232_zuha_01_efficientnet_b0_constrained_ep8_bs32_lr0p0001_jpeg_like",
-    "timestamp": "20260514_143232",
+    "experiment_id": "20260514_162646_zuha_01_efficientnet_b0_constrained_ep8_bs32_lr0p001_light_aug",
+    "timestamp": "20260514_162646",
     "runner": "zuha",
     "model_name": "01_efficientnet_b0",
     "run_type": "constrained",
     "epochs": 8,
     "batch_size": 32,
-    "learning_rate": 0.0001,
+    "learning_rate": 0.001,
     "optimizer": "adamw",
     "weight_decay": 0.0001,
     "scheduler": "cosine",
@@ -14,7 +14,7 @@
     "image_size": 224,
     "pretrained": true,
     "freeze_backbone": false,
-    "augmentation_type": "jpeg_like",
+    "augmentation_type": "light_aug",
     "seed": 42,
     "threshold": 0.5,
     "use_wang_train": false,
@@ -28,5 +28,5 @@
     "max_train_images": 6000,
     "max_eval_real": 4000,
     "max_eval_synthetic": 4000,
-    "experiment_notes": "Exp 4 + jpeg_like augmentation + cosine scheduler + 8 epochs"
+    "experiment_notes": "Experiment #6 = Exp #2 + light_aug augmentation + cosine scheduler + 8 epochs + 1e-3 LR"
 }
