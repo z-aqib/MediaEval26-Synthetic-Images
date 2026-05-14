@@ -157,7 +157,7 @@ RUN_TYPE = "constrained"                   # Use "constrained" or "open"
 # General training settings
 EPOCHS = 8
 BATCH_SIZE = 32
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-3
 OPTIMIZER_NAME = "adamw"                   # Options: "adam", "adamw", "sgd"
 WEIGHT_DECAY = 1e-4
 SCHEDULER_NAME = "cosine"                    # Options: "none", "cosine", "step"
@@ -167,7 +167,7 @@ LOSS_FUNCTION_NAME = "BCEWithLogitsLoss"
 IMAGE_SIZE = 224
 PRETRAINED = True
 FREEZE_BACKBONE = False
-AUGMENTATION_TYPE = "jpeg_like"                # Options: "basic", "light_aug", "jpeg_like", "strong"
+AUGMENTATION_TYPE = "light_aug"                # Options: "basic", "light_aug", "jpeg_like", "strong"
 
 # Reproducibility
 SEED = 42
@@ -179,7 +179,7 @@ SEED = 42
 THRESHOLD = 0.5
 
 # Notes for this experiment.
-EXPERIMENT_NOTES = "Exp 4 + jpeg_like augmentation + cosine scheduler + 8 epochs"
+EXPERIMENT_NOTES = "Experiment #6 = Exp #2 + light_aug augmentation + cosine scheduler + 8 epochs + 1e-3 LR"
 
 print("Shared parameters loaded.")
 print(f"Runner: {RUNNER_NAME}")
