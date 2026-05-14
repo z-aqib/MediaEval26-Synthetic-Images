@@ -141,7 +141,7 @@ else:
 # # Variables
 # CHANGE THIS ONLYYY
 
-# In[4]:
+# In[ ]:
 
 
 # ============================================================
@@ -155,19 +155,19 @@ MODEL_NAME = "01_efficientnet_b0"             # This notebook is for EfficientNe
 RUN_TYPE = "constrained"                   # Use "constrained" or "open"
 
 # General training settings
-EPOCHS = 5
+EPOCHS = 8
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
 OPTIMIZER_NAME = "adamw"                   # Options: "adam", "adamw", "sgd"
 WEIGHT_DECAY = 1e-4
-SCHEDULER_NAME = "none"                    # Options: "none", "cosine", "step"
+SCHEDULER_NAME = "cosine"                    # Options: "none", "cosine", "step"
 LOSS_FUNCTION_NAME = "BCEWithLogitsLoss"
 
 # Image/model settings
 IMAGE_SIZE = 224
 PRETRAINED = True
 FREEZE_BACKBONE = False
-AUGMENTATION_TYPE = "basic"                # Options: "basic", "light_aug", "jpeg_like"
+AUGMENTATION_TYPE = "jpeg_like"                # Options: "basic", "light_aug", "jpeg_like", "strong"
 
 # Reproducibility
 SEED = 42
@@ -179,7 +179,7 @@ SEED = 42
 THRESHOLD = 0.5
 
 # Notes for this experiment.
-EXPERIMENT_NOTES = "EfficientNet-B0 baseline with basic augmentation"
+EXPERIMENT_NOTES = "Exp 4 + jpeg_like augmentation + cosine scheduler + 8 epochs"
 
 print("Shared parameters loaded.")
 print(f"Runner: {RUNNER_NAME}")
@@ -240,14 +240,14 @@ USE_WANG_TEST_AS_TRAIN = False
 
 # Optional larger Wang source.
 # Keep False for first run. Turn True later if we want more Wang training data.
-USE_WANG_CNN_SYNTH_TEST_AS_TRAIN = False
+USE_WANG_CNN_SYNTH_TEST_AS_TRAIN = True
 
 # Corvi is synthetic-only latent diffusion data.
 USE_CORVI_TRAIN = True
 
 # Open-run extra training data.
 USE_DMIMAGEDETECT_TRAIN = False
-USE_REALRAISE_TRAIN = False
+USE_REALRAISE_TRAIN = False # check experiment#3, we got a better result in experiment#2 without realraise
 
 # ----------------------------
 # Fixed evaluation dataset
