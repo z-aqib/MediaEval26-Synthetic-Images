@@ -166,7 +166,7 @@ LOSS_FUNCTION_NAME = "BCEWithLogitsLoss"
 # Image/model settings
 IMAGE_SIZE = 224
 PRETRAINED = True
-FREEZE_BACKBONE = False
+FREEZE_BACKBONE = True
 AUGMENTATION_TYPE = "basic"                # Options: "basic", "light_aug", "jpeg_like", "strong"
 
 # Reproducibility
@@ -179,7 +179,7 @@ SEED = 42
 THRESHOLD = 0.5
 
 # Notes for this experiment.
-EXPERIMENT_NOTES = "Experiment #9 = Open run: Exp #2 best setup + DMImageDetect train synthetic images"
+EXPERIMENT_NOTES = "Experiment #10 = Open run: frozen EfficientNet backbone, classifier-only training, Exp #9 open dataset setup"
 
 print("Shared parameters loaded.")
 print(f"Runner: {RUNNER_NAME}")
