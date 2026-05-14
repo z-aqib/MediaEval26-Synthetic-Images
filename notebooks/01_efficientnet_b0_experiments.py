@@ -152,22 +152,22 @@ else:
 
 RUNNER_NAME = "zuha"                       # Change to: "zuha", "izma", or "fatima"
 MODEL_NAME = "01_efficientnet_b0"             # This notebook is for EfficientNet-B0 experiments
-RUN_TYPE = "constrained"                   # Use "constrained" or "open"
+RUN_TYPE = "open"                   # Use "constrained" or "open"
 
 # General training settings
-EPOCHS = 5
+EPOCHS = 8
 BATCH_SIZE = 32
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 5e-5
 OPTIMIZER_NAME = "adamw"                   # Options: "adam", "adamw", "sgd"
 WEIGHT_DECAY = 1e-4
-SCHEDULER_NAME = "none"                    # Options: "none", "cosine", "step"
+SCHEDULER_NAME = "cosine"                    # Options: "none", "cosine", "step"
 LOSS_FUNCTION_NAME = "BCEWithLogitsLoss"
 
 # Image/model settings
 IMAGE_SIZE = 224
 PRETRAINED = True
 FREEZE_BACKBONE = False
-AUGMENTATION_TYPE = "light_aug"                # Options: "basic", "light_aug", "jpeg_like", "strong"
+AUGMENTATION_TYPE = "basic"                # Options: "basic", "light_aug", "jpeg_like", "strong"
 
 # Reproducibility
 SEED = 42
@@ -179,7 +179,7 @@ SEED = 42
 THRESHOLD = 0.5
 
 # Notes for this experiment.
-EXPERIMENT_NOTES = "Experiment #7 = Exp #2 + light_aug augmentation"
+EXPERIMENT_NOTES = "Experiment #8 = Exp #2 + lower LR 5e-5 + cosine scheduler + 8 epochs + type open"
 
 print("Shared parameters loaded.")
 print(f"Runner: {RUNNER_NAME}")
