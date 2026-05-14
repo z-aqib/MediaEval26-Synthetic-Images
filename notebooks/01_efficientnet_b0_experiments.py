@@ -31,7 +31,7 @@
 # 
 # Only change the parameter block at the top before each run. Do not change the evaluation dataset unless the whole team agrees, because all models must be tested on the same evaluation data.
 
-# In[1]:
+# In[ ]:
 
 
 # Install common packages needed for EfficientNet-B0 training and experiment logging
@@ -41,7 +41,7 @@ get_ipython().run_line_magic('pip', 'install numpy pandas scikit-learn matplotli
 
 # # Imports
 
-# In[2]:
+# In[ ]:
 
 
 # ============================================================
@@ -94,7 +94,7 @@ from torchvision.models import EfficientNet_B0_Weights
 print("EfficientNet-specific imports completed.")
 
 
-# In[3]:
+# In[ ]:
 
 
 # ============================================================
@@ -155,12 +155,12 @@ MODEL_NAME = "01_efficientnet_b0"             # This notebook is for EfficientNe
 RUN_TYPE = "constrained"                   # Use "constrained" or "open"
 
 # General training settings
-EPOCHS = 8
+EPOCHS = 5
 BATCH_SIZE = 32
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 OPTIMIZER_NAME = "adamw"                   # Options: "adam", "adamw", "sgd"
 WEIGHT_DECAY = 1e-4
-SCHEDULER_NAME = "cosine"                    # Options: "none", "cosine", "step"
+SCHEDULER_NAME = "none"                    # Options: "none", "cosine", "step"
 LOSS_FUNCTION_NAME = "BCEWithLogitsLoss"
 
 # Image/model settings
@@ -179,7 +179,7 @@ SEED = 42
 THRESHOLD = 0.5
 
 # Notes for this experiment.
-EXPERIMENT_NOTES = "Experiment #6 = Exp #2 + light_aug augmentation + cosine scheduler + 8 epochs + 1e-3 LR"
+EXPERIMENT_NOTES = "Experiment #7 = Exp #2 + light_aug augmentation"
 
 print("Shared parameters loaded.")
 print(f"Runner: {RUNNER_NAME}")
@@ -209,7 +209,7 @@ print(f"USE_AMP: {USE_AMP}")
 print(f"SAVE_BEST_BY: {SAVE_BEST_BY}")
 
 
-# In[5]:
+# In[ ]:
 
 
 # ============================================================
@@ -284,7 +284,7 @@ print(f"Fixed evaluation dataset key: {EVALUATION_DATASET_KEY}")
 print(f"Fixed eval real/synthetic: {MAX_EVAL_REAL}/{MAX_EVAL_SYNTHETIC}")
 
 
-# In[6]:
+# In[ ]:
 
 
 # ============================================================
@@ -331,7 +331,7 @@ print(f"Summary CSV path: {SUMMARY_CSV_PATH}")
 
 # ## dataset paths
 
-# In[7]:
+# In[ ]:
 
 
 # ============================================================
@@ -367,7 +367,7 @@ for key, path in DATASET_PATHS.items():
 
 # ## helper functions to load, build
 
-# In[8]:
+# In[ ]:
 
 
 # ============================================================
@@ -855,7 +855,7 @@ def scan_dmimagedetect_test_balanced(dataset_key, dataset_path, max_real=5000, m
 
 # ## load dataset
 
-# In[9]:
+# In[ ]:
 
 
 # ============================================================
@@ -1025,7 +1025,7 @@ print("[build_data] DONE building training and evaluation dataframes")
 print("#" * 80)
 
 
-# In[10]:
+# In[ ]:
 
 
 # ============================================================
@@ -1050,7 +1050,7 @@ else:
     print("Leakage removal is disabled. Make sure train/eval datasets are separate.")
 
 
-# In[11]:
+# In[ ]:
 
 
 # Quick check to see what Kaggle paths actually exist
@@ -1058,7 +1058,7 @@ for item in Path("/kaggle/input").iterdir():
     print(item)
 
 
-# In[12]:
+# In[ ]:
 
 
 # ============================================================
@@ -1088,7 +1088,7 @@ print("\nEvaluation dataframe preview:")
 display(eval_df.head())
 
 
-# In[13]:
+# In[ ]:
 
 
 # ============================================================
@@ -1135,7 +1135,7 @@ print("Hard dataset safety checks passed.")
 
 # ## metric calculation
 
-# In[14]:
+# In[ ]:
 
 
 # ============================================================
@@ -1269,7 +1269,7 @@ print("Metric functions ready.")
 
 # ## logging
 
-# In[15]:
+# In[ ]:
 
 
 # ============================================================
@@ -1513,7 +1513,7 @@ print("Saving and logging functions ready.")
 
 # ## image transform
 
-# In[16]:
+# In[ ]:
 
 
 # ============================================================
@@ -1610,7 +1610,7 @@ print(f"Training augmentation type: {AUGMENTATION_TYPE}")
 
 # ## pytorch
 
-# In[17]:
+# In[ ]:
 
 
 # ============================================================
@@ -1677,7 +1677,7 @@ print("BinaryImageDataset class ready.")
 
 # ## dataloaders
 
-# In[18]:
+# In[ ]:
 
 
 # ============================================================
@@ -1715,7 +1715,7 @@ print(f"Evaluation batches:{len(eval_loader)}")
 
 # ## create model
 
-# In[19]:
+# In[ ]:
 
 
 # ============================================================
@@ -1778,7 +1778,7 @@ print(model.classifier)
 
 # ## optimizers, schedulers
 
-# In[20]:
+# In[ ]:
 
 
 # ============================================================
@@ -1875,7 +1875,7 @@ print(f"Scheduler: {SCHEDULER_NAME}")
 
 # ## functions
 
-# In[21]:
+# In[ ]:
 
 
 # ============================================================
@@ -2003,7 +2003,7 @@ print("Training and evaluation functions ready.")
 
 # ## run training
 
-# In[22]:
+# In[ ]:
 
 
 # ============================================================
@@ -2127,7 +2127,7 @@ print(f"Best validation F1: {best_val_f1:.4f}")
 
 # # evaluation
 
-# In[23]:
+# In[ ]:
 
 
 # ============================================================
@@ -2180,7 +2180,7 @@ print("=" * 70)
 
 # # log, save, analyze
 
-# In[24]:
+# In[ ]:
 
 
 # ============================================================
@@ -2221,7 +2221,7 @@ print("\nLatest summary rows:")
 display(summary_df.tail())
 
 
-# In[25]:
+# In[ ]:
 
 
 # ============================================================
@@ -2257,7 +2257,7 @@ else:
 # # save outputs in a zip
 # because the outputs are alot, instead of downloading each manually we can just download one zip and it would download in the correct folder structure and we can just paste in github/vscode
 
-# In[26]:
+# In[ ]:
 
 
 import os
