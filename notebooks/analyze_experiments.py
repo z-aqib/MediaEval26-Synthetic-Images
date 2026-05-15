@@ -1046,16 +1046,14 @@ else:
     print("No best commit hash found. Skipping Git extraction.")
 
 
-# ## fallback: if best not found in git, make current = best
+# ## extract top 4 experiments (top 2 constrained + top 2 open)
 
-# In[16]:
+# In[ ]:
 
 
 # ============================================================
-# 16. FALLBACK: COPY CURRENT FILES IF GIT EXTRACTION FAILS
+# 15b. FALLBACK HELPER (defined here so top-4 extraction below can use it)
 # ============================================================
-# If Git extraction does not work, this copies the current files from the model folder.
-# This is useful if the best experiment is also the current/latest run.
 
 def copy_current_best_files(best_row):
     """
@@ -1115,6 +1113,131 @@ def copy_current_best_files(best_row):
 
     return dest_dir
 
+
+# ============================================================
+# 15b. EXTRACT TOP 4 EXPERIMENTS FROM GIT
+# ============================================================
+# Selects the top 2 constrained and top 2 open experiments by F1
+# and extracts best_model.pth + companion files for each.
+# Output goes to outputs/best_overall/<model_folder>_<experiment_id>/
+# ============================================================
+
+def extract_top_n_by_run_type(ranked_df, run_type, n=2):
+    """
+    Return the top-n rows from ranked_df for a given run_type.
+
+    Parameters:
+        ranked_df (pd.DataFrame): Full ranked experiments dataframe.
+        run_type (str): "constrained" or "open".
+        n (int): Number of top experiments to select.
+
+    Returns:
+        pd.DataFrame: Up to n rows, already ranked by F1.
+    """
+    if "run_type" not in ranked_df.columns:
+        print(f"WARNING: 'run_type' column not found. Cannot filter by run_type={run_type}.")
+        return pd.DataFrame()
+
+    subset = ranked_df[ranked_df["run_type"] == run_type].head(n)
+    print(f"Top {n} {run_type} experiments:")
+    for _, row in subset.iterrows():
+        print(f"  Rank {row.get('rank')}  F1={row.get('f1'):.4f}  {row.get('experiment_id')}")
+    return subset
+
+
+print("\n" + "=" * 70)
+print("EXTRACTING TOP 4 EXPERIMENTS (top 2 constrained + top 2 open)")
+print("=" * 70)
+
+top4_extraction_log = []
+
+if len(ranked_df) > 0:
+    top_constrained = extract_top_n_by_run_type(ranked_df, run_type="constrained", n=2)
+    top_open        = extract_top_n_by_run_type(ranked_df, run_type="open",        n=2)
+    top_4_df        = pd.concat([top_constrained, top_open], ignore_index=True)
+
+    print(f"\nTotal experiments to extract: {len(top_4_df)}")
+
+    for _, exp_row in top_4_df.iterrows():
+        exp_id     = exp_row["experiment_id"]
+        model_fold = exp_row["model_folder"]
+        run_type   = exp_row.get("run_type", "unknown")
+        f1_val     = exp_row.get("f1", "?")
+
+        print(f"\n--- Extracting: {exp_id}")
+        print(f"    run_type={run_type}  F1={f1_val}  model_folder={model_fold}")
+
+        commit = find_commit_for_experiment(
+            experiment_id=exp_id,
+            model_folder=model_fold
+        )
+
+        if commit is not None:
+            results = extract_best_experiment_files(exp_row, commit)
+            status  = "extracted_from_git"
+        else:
+            print(f"    Commit not found in git. Checking if current files match...")
+            # Fallback: if the current config.json experiment_id matches, copy current files.
+            current_config_path = OUTPUTS_DIR / model_fold / "config.json"
+            if current_config_path.exists():
+                with open(current_config_path) as f_cfg:
+                    current_cfg = json.load(f_cfg)
+                if current_cfg.get("experiment_id") == exp_id:
+                    print(f"    Current files match this experiment. Copying as fallback.")
+                    copy_current_best_files(exp_row)
+                    status  = "copied_current_files"
+                    results = {}
+                else:
+                    print(f"    Current files are from a different experiment. Skipping.")
+                    status  = "not_found"
+                    results = {}
+            else:
+                print(f"    No config.json found for {model_fold}. Skipping.")
+                status  = "not_found"
+                results = {}
+
+        top4_extraction_log.append({
+            "experiment_id": exp_id,
+            "run_type":      run_type,
+            "model_folder":  model_fold,
+            "f1":            f1_val,
+            "commit_hash":   commit,
+            "status":        status,
+            "pth_extracted": results.get("best_model.pth", False),
+        })
+
+    print("\n" + "=" * 70)
+    print("TOP 4 EXTRACTION SUMMARY")
+    print("=" * 70)
+    for entry in top4_extraction_log:
+        pth_ok = "✓ pth found" if entry["pth_extracted"] else "✗ pth MISSING"
+        print(
+            f"[{entry['run_type']:>12s}]  {pth_ok}  "
+            f"status={entry['status']}  "
+            f"F1={entry['f1']:.4f}  "
+            f"{entry['experiment_id']}"
+        )
+
+    # Save log so the inference script can read model paths automatically.
+    top4_log_path = BEST_OVERALL_DIR / "top4_extraction_log.json"
+    with open(top4_log_path, "w") as f_log:
+        json.dump(top4_extraction_log, f_log, indent=4, default=str)
+    print(f"\nExtraction log saved to: {top4_log_path}")
+
+else:
+    print("No experiments in ranked_df. Skipping top-4 extraction.")
+
+
+# ## fallback: if best not found in git, make current = best
+
+# In[16]:
+
+
+# ============================================================
+# 16. FALLBACK: COPY CURRENT FILES IF GIT EXTRACTION FAILS
+# ============================================================
+# copy_current_best_files() is defined above in section 15b so both
+# the top-4 extraction and this manual fallback cell can use it.
 
 # Run this manually only if Git extraction failed or you know the best run is the latest run.
 # fallback_dir = copy_current_best_files(best_row)

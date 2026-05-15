@@ -1,7 +1,7 @@
 Task A Experiment Analysis Report
 ==================================================
 
-Generated at: 2026-05-15 15:55:20
+Generated at: 2026-05-15 17:09:07
 Total experiments analyzed: 16
 Primary ranking metric: f1
 

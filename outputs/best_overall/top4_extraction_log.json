@@ -1,0 +1,38 @@
+[
+    {
+        "experiment_id": "20260514_105614_zuha_01_efficientnet_b0_constrained_ep5_bs32_lr0p0001_basic",
+        "run_type": "constrained",
+        "model_folder": "01_efficientnet_b0",
+        "f1": 0.740302744,
+        "commit_hash": "5e76502fe9d484b4c1a09dea145309c780cc84f8",
+        "status": "extracted_from_git",
+        "pth_extracted": true
+    },
+    {
+        "experiment_id": "20260514_130821_zuha_01_efficientnet_b0_constrained_ep10_bs32_lr0p0001_basic",
+        "run_type": "constrained",
+        "model_folder": "01_efficientnet_b0",
+        "f1": 0.740302743614002,
+        "commit_hash": "5e76502fe9d484b4c1a09dea145309c780cc84f8",
+        "status": "extracted_from_git",
+        "pth_extracted": true
+    },
+    {
+        "experiment_id": "20260514_205725_zuha_01_efficientnet_b0_open_ep5_bs32_lr0p0001_basic",
+        "run_type": "open",
+        "model_folder": "01_efficientnet_b0",
+        "f1": 0.71875,
+        "commit_hash": "5e76502fe9d484b4c1a09dea145309c780cc84f8",
+        "status": "extracted_from_git",
+        "pth_extracted": true
+    },
+    {
+        "experiment_id": "20260514_194804_zuha_01_efficientnet_b0_open_ep8_bs32_lr5em05_basic",
+        "run_type": "open",
+        "model_folder": "01_efficientnet_b0",
+        "f1": 0.7164825644357808,
+        "commit_hash": "5e76502fe9d484b4c1a09dea145309c780cc84f8",
+        "status": "extracted_from_git",
+        "pth_extracted": true
+    }
+]
