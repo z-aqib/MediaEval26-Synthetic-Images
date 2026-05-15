@@ -49,7 +49,7 @@ REPO_ROOT    = Path(__file__).resolve().parent.parent
 # Path to the competition evaluation dataset folder.
 # All images are found recursively; sub-folders are fine.
 # After extracting taska_test_R03SaaV7P(1).tar into data/, verify the folder name matches.
-EVAL_DATASET_PATH = REPO_ROOT / "data" / "taska_test_R03SaaV7P"
+EVAL_DATASET_PATH = REPO_ROOT / "data" / "taska_test"
 
 # Team identifier used in output filenames.
 TEAM_NAME = "CVG-IBA_MMRG-IBA"
