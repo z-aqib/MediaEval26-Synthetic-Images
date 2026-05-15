@@ -1,6 +1,6 @@
 {
-    "experiment_id": "20260514_205725_zuha_01_efficientnet_b0_open_ep5_bs32_lr0p0001_basic",
-    "timestamp": "20260514_205725",
+    "experiment_id": "20260514_215117_zuha_01_efficientnet_b0_open_ep5_bs32_lr0p0001_basic",
+    "timestamp": "20260514_215117",
     "runner": "zuha",
     "model_name": "01_efficientnet_b0",
     "run_type": "open",
@@ -13,7 +13,7 @@
     "loss_function": "BCEWithLogitsLoss",
     "image_size": 224,
     "pretrained": true,
-    "freeze_backbone": false,
+    "freeze_backbone": true,
     "augmentation_type": "basic",
     "seed": 42,
     "threshold": 0.5,
@@ -28,5 +28,5 @@
     "max_train_images": 6000,
     "max_eval_real": 4000,
     "max_eval_synthetic": 4000,
-    "experiment_notes": "Experiment #9 = Open run: Exp #2 best setup + DMImageDetect train synthetic images"
+    "experiment_notes": "Experiment #10 = Open run: frozen EfficientNet backbone, classifier-only training, Exp #9 open dataset setup"
 }

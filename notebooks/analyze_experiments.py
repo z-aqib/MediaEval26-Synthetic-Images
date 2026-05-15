@@ -42,6 +42,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+try:
+    from IPython.display import display
+except ImportError:
+    def display(obj):
+        if hasattr(obj, 'to_string'):
+            print(obj.to_string())
+        else:
+            print(obj)
+
 print("Imports completed.")
 
 
@@ -53,12 +62,15 @@ print("Imports completed.")
 # ============================================================
 # 2. PROJECT PATH SETUP
 # ============================================================
-# Run this notebook from VS Code inside the repo.
-# If the notebook is inside notebooks/, this will move one level up to repo root.
+# Resolve the repository root from this script/notebook file location first.
+# This avoids failures when the script is launched from a different working directory.
+try:
+    CURRENT_FILE = Path(__file__).resolve()
+    CURRENT_DIR = CURRENT_FILE.parent
+except NameError:
+    CURRENT_DIR = Path.cwd()
 
-CURRENT_DIR = Path.cwd()
-
-# If running from notebooks folder, repo root is parent.
+# If this file is inside notebooks/, repo root is parent.
 if CURRENT_DIR.name == "notebooks":
     REPO_ROOT = CURRENT_DIR.parent
 else:
