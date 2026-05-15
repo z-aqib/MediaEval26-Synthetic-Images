@@ -34,5 +34,5 @@ We selected EfficientNet-B0 as our initial baseline for Subtask A because it is 
 
 ## Group Members
 - Zuha Aqib, 26106
-- Izma Khan, 
+- Izma Khan, 26926
 - Fatima Naeem, 
